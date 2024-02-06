@@ -12,6 +12,8 @@
 #ifndef _SOBEL_H
 #define _SOBEL_H
 
-
+//Function prototypes
+void to442_grayscale(Mat& input, Mat& output);
+void to442_sobel(Mat& input, Mat& output);
 
 #endif //- _SOBEL_H
