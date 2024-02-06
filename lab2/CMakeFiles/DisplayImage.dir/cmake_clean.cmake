@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/DisplayImage.dir/DisplayImage.cpp.o"
+  "CMakeFiles/DisplayImage.dir/DisplayImage.cpp.o.d"
   "DisplayImage"
   "DisplayImage.pdb"
 )
