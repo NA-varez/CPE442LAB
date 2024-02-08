@@ -1,4 +1,4 @@
-CMakeFiles/main.dir/main.cpp.o: /home/na/CPE442LAB/lab3/main.cpp \
+CMakeFiles/main.dir/main.cpp.o: /home/na/CPE442LAB/lab4/main.cpp \
  /usr/include/stdc-predef.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -23,7 +23,7 @@ CMakeFiles/main.dir/main.cpp.o: /home/na/CPE442LAB/lab3/main.cpp \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
  /usr/include/x86_64-linux-gnu/bits/floatn.h \
  /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
- /home/na/CPE442LAB/lab3/sobel.hpp /home/na/CPE442LAB/lab3/main.hpp \
+ /home/na/CPE442LAB/lab4/sobel.hpp /home/na/CPE442LAB/lab4/main.hpp \
  /usr/local/include/opencv4/opencv2/opencv.hpp \
  /usr/local/include/opencv4/opencv2/opencv_modules.hpp \
  /usr/local/include/opencv4/opencv2/core.hpp \
