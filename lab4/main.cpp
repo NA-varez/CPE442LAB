@@ -9,8 +9,7 @@
 *
 * Version: 0.1
 *
-* Reference: Richard Rios: Helped fix uchar overflow in sobel function
-*			 that was reducing quality of sobel output.
+* Reference: 
 **********************************************/
 #include <stdio.h>
 #include <pthread.h>
@@ -26,92 +25,38 @@
 using namespace cv;
 using namespace std;
 
+/*********************************************************/
+// Function Definitions
+void* threadFrameSplit(void* threadSplitArgs);
+void* threadSobel(void* inputThreadArgs);
 
-/*********************************************
-* Function: to442_grayscale
-*
-* Description: Converts input Mat frame to grayscale
-* Input: Input mat frame reference
-* Output: Output grayscale mat frame reference
-*
-**********************************************/
-void to442_grayscale(Mat& input, Mat& output) {
-	// Check if input and output have the same size
-    if (input.size() != output.size()) {
-        cerr << "Input and output Mat sizes do not match!" << endl;
-        return;
-    }
+// Struct and variable creation
 
-    // Check if input is empty
-    if (input.empty()) {
-        cerr << "Input Mat is empty!" << endl;
-        return;
-    }
-	
-	//For each pixel in Mat
-	for (int i = 0; i < input.rows - 1; ++i) {
-		for (int j = 0; j < input.cols - 1; ++j) {
-			Vec3b pixel = input.at<Vec3b>(i, j);
+pthread_t thread[4];
 
-			//Red = pixel[2];
-			//Green = pixel[1];
-			//Blue = pixel[0];
+struct threadSplitArgs {
+	Mat* input;
+	Mat* grayScale;
+	Mat* output;
+	int rows;
+	int cols;
+	int stop;
+};
 
-			//ITU-R (BT.709) recommended algorithm for grayscale
-			uchar grayPixel = (0.2126 * pixel[2] + 0.7152 * pixel[1] + 0.0722 * pixel[0]);
-			//All pixels now represent 1 'intensity' value that will be used in the sobel
-			output.at<uchar>(i, j) = grayPixel;
-		}	
-	}	
-}
+struct threadArgs {
+	Mat* input;
+	Mat* grayScale;
+	Mat* output;
+	int start; // I dont know whether to make these pointers or not , same goies for the rows and cols variables in the above struct
+	int end;
+	int stop;
+};
 
-/*********************************************
-* Function: to442_sobel
-*
-* Description: Converts input grayscale Mat frame to sobel
-* Input: Input grayscale mat frame reference
-* Output: Output sobel mat frame reference
-*
-**********************************************/
-void to442_sobel(Mat& input, Mat& output) {
-	//For each pixel in Mat (except on border)
-	//Starts sobel in row 1 column 1 (inclusive 0)
-	for (int i = 1; i < input.rows - 1; ++i) {
-		for (int j = 1; j < input.cols - 1; ++j) {
+pthread_barrier_t barrierSobel, barrierGrayScale, barrierStart, barrierContinue, barrierEnd;
+pthread_attr_t attr;
+/*********************************************************/
 
-			//X and Y filter operations on surrounding intensity pixels
-            //Had to upgrade the variable type from uchar to int to prevent overflow
-			int g_x = (-1*input.at<uchar>(i-1,j-1)) + input.at<uchar>(i-1,j+1) +
-					(-2*input.at<uchar>(i,j-1)) + 2*input.at<uchar>(i,j+1) +
-					(-1*input.at<uchar>(i+1,j-1)) + input.at<uchar>(i+1,j+1);
-			int g_y = (-1*input.at<uchar>(i-1,j-1)) + -1*input.at<uchar>(i-1,j+1) +
-					(-2*input.at<uchar>(i-1,j)) + 2*input.at<uchar>(i+1,j) +
-					(1*input.at<uchar>(i+1,j-1)) + 1*input.at<uchar>(i+1,j+1);
-			
 
-			//Approximation of Sobel without using pow or sqrt
-			//A saturate cast of uchar is used to cut off the size of the computation if 
-			//It is bigger than a uchar can hold.
-			output.at<uchar>(i, j) = saturate_cast<uchar>(std::abs(g_x) + std::abs(g_y));
-		}
-	}
-
-	//Pad top and bottom border pixels as zero
-	for(int i = 0; i < input.cols; ++i) {
-		//First row
-		input.at<uchar>(0, i) = 0;
-		//Last row
-		input.at<uchar>(input.rows - 1, i) = 0;
-	}
-
-	//Pad left and right border pixels as zero
-	for(int j = 0; j < input.rows; ++j) {
-		//First column
-		input.at<uchar>(j, 0) = 0;
-		//Last column
-		input.at<uchar>(j, input.cols - 1) = 0;
-	}
-}
 
 /*********************************************
 * Function: threadFrameSplit
@@ -121,17 +66,110 @@ void to442_sobel(Mat& input, Mat& output) {
 * Output: Output sobel mat frame reference
 *
 **********************************************/
-void* threadFrameSplit(Mat& input, Mat& output) {
-	//might need to leave the size() function out of this becuase Mat& is just a reference
-	// the refereence cant support .size() ??????
+void* threadFrameSplit(void* threadSplitArgs) {
 
+	threadArgs defaultThreadArgs = {
+		.input = NULL,
+		.grayScale = NULL,
+		.output = NULL,
+		.start = 0,
+		.end = 0,
+		.stop = 0
+	};
 
-	//add barrier for the read running this function
-	//Feed Mat& references into threads computational functions
-		
-	//Stitch everything back together into full sobel frame
+	// Have to assign the threadArgs to a default to prevent a seg fault 
+	// when creating the threads for the first time
+	threadArgs thread1Args = defaultThreadArgs;
+	threadArgs thread2Args = defaultThreadArgs;
+	threadArgs thread3Args = defaultThreadArgs;
+	threadArgs thread4Args = defaultThreadArgs;
 	
-	//
+	// 4 threads for 4 horizontal sections of the frame
+	pthread_create(&thread[1], NULL, threadSobel, (void *)&thread1Args);
+	pthread_create(&thread[2], NULL, threadSobel, (void *)&thread2Args);
+	pthread_create(&thread[3], NULL, threadSobel, (void *)&thread3Args);
+	pthread_create(&thread[4], NULL, threadSobel, (void *)&thread4Args);
+	printf("sobel threads created\n");
+
+	while(true) {
+		pthread_barrier_wait(&barrierStart);
+		printf("splitter has passed start barrier\n");
+		struct threadSplitArgs *pStruct = (struct threadSplitArgs*)threadSplitArgs;
+		//threadSplitArgs* pStruct = new threadSplitArgs();
+
+		// Unpacking threadSplitArgs to their respective var types
+		Mat* inputFrame = (pStruct->input);
+		Mat* grayScaleFrame = (pStruct->grayScale);
+		Mat* outputFrame = (pStruct->output);
+		int rows = (pStruct->rows);
+		int cols = (pStruct->cols);
+		int stopProcess = (pStruct->stop);
+
+		// Breaks out of while loop if stop is set to '1' by main while
+		if(stopProcess == 1) {
+			pthread_barrier_wait(&barrierContinue);
+			break;
+		}
+
+		thread1Args.input = inputFrame;
+		thread1Args.grayScale = grayScaleFrame;
+		thread1Args.output = outputFrame;
+		thread1Args.start = 1;
+		thread1Args.end = rows / 4;
+		thread1Args.stop = stopProcess;
+
+		thread2Args.input = inputFrame;
+		thread2Args.grayScale = grayScaleFrame;
+		thread2Args.output = outputFrame;
+		thread2Args.start = (rows / 4) + 1; // might have to get rid of +1
+		thread2Args.end = rows / 2;
+		thread1Args.stop = stopProcess;
+
+		thread3Args.input = inputFrame;
+		thread3Args.grayScale = grayScaleFrame;
+		thread3Args.output = outputFrame;
+		thread3Args.start = (rows / 2) + 1;
+		thread3Args.end = (rows / 2) + (rows / 4);
+		thread1Args.stop = stopProcess;
+
+		thread4Args.input = inputFrame;
+		thread4Args.grayScale = grayScaleFrame;
+		thread4Args.output = outputFrame;
+		thread4Args.start = (rows / 2) + (rows / 4) + 1;
+		thread4Args.end = rows - 1;
+		thread1Args.stop = stopProcess;
+
+		printf("splitter thread reaches CONTINUE BARRIER\n");
+		pthread_barrier_wait(&barrierContinue);
+
+		//Pad top and bottom border pixels as zero
+		for(int i = 0; i < cols; ++i) {
+			//First row
+			grayScaleFrame->at<uchar>(0, i) = 0;
+			//Last row
+			grayScaleFrame->at<uchar>(rows - 1, i) = 0;
+		}
+
+		//Pad left and right border pixels as zero
+		for(int j = 0; j < rows; ++j) {
+			//First column
+			grayScaleFrame->at<uchar>(j, 0) = 0;
+			//Last column
+			grayScaleFrame->at<uchar>(j, cols - 1) = 0;
+		}
+
+		// Wait for threads to reach barrier
+		pthread_barrier_wait(&barrierGrayScale);
+		printf("split thread passed graybarrier\n");
+		
+		printf("split thread reaches sobelbarrier\n");
+		// Wait for threads to reach barrier
+		pthread_barrier_wait(&barrierSobel);
+		printf("split thread passed sobelbarrier\n");
+	}
+
+	pthread_barrier_wait(&barrierEnd);
+	return 0;
 }
 
 /*********************************************
@@ -142,60 +180,77 @@ void* threadFrameSplit(Mat& input, Mat& output) {
 * Output: Output sobel mat frame reference
 *
 **********************************************/
-void* threadSobel(Mat& input, Mat& output) {
+void* threadSobel(void* inputThreadArgs) {
+	while(true) {
+		printf("sobel thread reaches CONTINUE BARRIER\n");
+		pthread_barrier_wait(&barrierContinue);
+		printf("sobel thread has passed CONTINUE BARRIER\n");
+		struct threadArgs *sobelStruct = (struct threadArgs*)inputThreadArgs;
+		
+		// Unpacking inputThreadArgs back to their respective var types
+		Mat* inputFrame = (sobelStruct->input);
+		Mat* grayScaleFrame = (sobelStruct->grayScale);
+		Mat* outputFrame = (sobelStruct->output);
+		int start = (sobelStruct->start);
+		int end = (sobelStruct->end);
+		int stopProcess = (sobelStruct->stop);
 
+		// Breaks out of while loop if stop is set to '1' by main while loop
+		if(stopProcess == 1) break;
 
+		for (int i = 0; i <= end; ++i) {						//ROWS
+			for (int j = 0; j < inputFrame->cols; ++j) {	//COLS
+				Vec3b pixel = inputFrame->at<Vec3b>(i, j);
 
-	//Barrier 
+				//Red = pixel[2];
+				//Green = pixel[1];
+				//Blue = pixel[0];
+
+				//ITU-R (BT.709) recommended algorithm for grayscale
+				uchar grayPixel = (0.2126 * pixel[2] + 0.7152 * pixel[1] + 0.0722 * pixel[0]);
+				//All pixels now represent 1 'intensity' value that will be used in the sobel
+				grayScaleFrame->at<uchar>(i, j) = grayPixel;
+			}	
+		}
+
+		// Wait for threads to complete the grayScaleFrame
+		pthread_barrier_wait(&barrierGrayScale);	
+		//printf("sobel thread passed graybarrier\n");
+
+		// At this point, the section of the frame alotted for this thread is now grayscale
+		// Next is to pass the grayscale through the sobel filter
+		for (int i = start; i <= end; ++i) {
+			for (int j = 1; j < outputFrame->cols; ++j) {
+
+				//X and Y filter operations on surrounding intensity pixels
+				//Had to upgrade the variable type from uchar to int to prevent overflow
+				int g_x = (-1*grayScaleFrame->at<uchar>(i-1,j-1)) + grayScaleFrame->at<uchar>(i-1,j+1) +
+						(-2*grayScaleFrame->at<uchar>(i,j-1)) + 2*grayScaleFrame->at<uchar>(i,j+1) +
+						(-1*grayScaleFrame->at<uchar>(i+1,j-1)) + grayScaleFrame->at<uchar>(i+1,j+1);
+				int g_y = (-1*grayScaleFrame->at<uchar>(i-1,j-1)) + -1*grayScaleFrame->at<uchar>(i-1,j+1) +
+						(-2*grayScaleFrame->at<uchar>(i-1,j)) + 2*grayScaleFrame->at<uchar>(i+1,j) +
+						(1*grayScaleFrame->at<uchar>(i+1,j-1)) + 1*grayScaleFrame->at<uchar>(i+1,j+1);
+				
+
+				//Approximation of Sobel without using pow or sqrt
+				//A saturate cast of uchar is used to cut off the size of the computation if 
+				//It is bigger than a uchar can hold.
+				outputFrame->at<uchar>(i, j) = saturate_cast<uchar>(std::abs(g_x) + std::abs(g_y));
+			}
+		}
+		printf("sobel thread reaches sobelbarrier\n");
+		// Wait for threads to finish Sobel frame before moving to the next frame
+		pthread_barrier_wait(&barrierSobel);
+		printf("sobel thread passed sobel barrier\n");
+	}
+	
+	pthread_barrier_wait(&barrierEnd);
+	return 0;
 }
 
-
-//int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
-//*(*start_routine) (void *), void *arg);
-
-//thread[4]???????????????
-pthread_t thread[3];
-
-struct threadArgs {
-	int a;
-	int b;
-};
-
-void* fnForThread1();
-void* fnForThread2(void* threadArgs);
-void* thread1Status;
-void* thread2Status;
-
-pthread_barrier_t barrier;
-
-void setupPthreadBarrier(__uint16_t numThreads) {
-	pthread_barrier_init(&barrier, NULL, numThreads)
-}
 
 //int main(int argc, char *argv[]) {
 int main(int argc, char** argv) {
-    
-	//might need this to be 5 if the thread that splits the stuff needs to be included
-	__uint16_t numThreads = 4;
-	setupPthreadBarrier(numThreads);
-
-	// Initialize attributes for new threads to be joinable
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-	//Create new threads running assigned void* functions
-	struct threadArgs = {.a = 0, .b = 1};
-	int retVal1 = pthread_create(&thread[0], NULL, fnForThread1, NULL);
-	int retVal2 = pthread_create(&thread[1], NULL, fnForThread2, (void *)&threadArgs);
-
-	// Parent thread will continue 
-	// until we reach a point when we wait for the child threads to finish
-	int retVal3 = pthread_join(thread[0], &thread1Status);
-	int retVal4 = pthread_join(thread[1], &thread2Status);
-	//Parent collects child thread's result
-
-
 	// Checks whether the number of command-line 
 	// arguments is sufficient (Should be ./main <videofile>)
 	if (argc != 2) {
@@ -212,49 +267,101 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-	cout << "Video conversion has begun" 
+	cout << "Video conversion has begun. " 
 		 << "Press 'x' to terminate" << endl;
 
-	// Mat object for original frame,
     Mat inputFrame;
+	Mat grayScaleFrame;
+	Mat outputFrame;
 
-	// Read first frame from the video
+	// Read first frame from the video and creates an output frame of same size.
+	// The output frame is same size but single channel (1 unsigned char per pixel)
 	cap.read(inputFrame);
+	outputFrame.create(inputFrame.size(), CV_8UC1);
+	grayScaleFrame.create(inputFrame.size(), CV_8UC1);
 
-	// Create grayscale frame, and sobel frame with same size of input frame
-	Mat grayscale, sobel;
-	grayscale.create(inputFrame.size(), CV_8UC1);
-	sobel.create(inputFrame.size(), CV_8UC1);
+	// Initialize pthread number of barriers before threads can continue
+	pthread_barrier_init(&barrierGrayScale, NULL, 5);
+	pthread_barrier_init(&barrierSobel, NULL, 5);
+	pthread_barrier_init(&barrierStart, NULL, 1);
+	pthread_barrier_init(&barrierContinue, NULL, 5); // Makes sobel threads wait for split thread before beginning grayscale
+	pthread_barrier_init(&barrierEnd, NULL, 5);
+
+	// Initialize attribute for new threads to be joinable
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	// Initial set of struct for frame splitting thread before it is created
+	threadSplitArgs threadSplitArgs;
+
+	threadSplitArgs.input = NULL;
+	threadSplitArgs.grayScale = NULL;
+	threadSplitArgs.output = NULL;
+	threadSplitArgs.rows = 0;
+	threadSplitArgs.cols = 0;
+	threadSplitArgs.stop = 0;
+
+	// 1 thread for splitting the input frame and feeding start and end rows to other 4 threads
+	pthread_create(&thread[0], NULL, threadFrameSplit, (void *)&threadSplitArgs);
+	
+	//printf("splitter thread created\n");
 
     while (true) {
+		// Continuous setting of struct for every new frame
+		// maybe I can pass in one int variable that just holds the number of rows each thread will do
+		threadSplitArgs.input = &inputFrame;
+		threadSplitArgs.grayScale = &grayScaleFrame;
+		threadSplitArgs.output = &outputFrame;
+		threadSplitArgs.rows = inputFrame.rows;
+		threadSplitArgs.cols = inputFrame.cols;
 
-        if (inputFrame.empty()) {
-			break; // Break the loop end if no more frames to grab
-        }
+		printf("splitter args set\n");
 
-        // Convert to grayscale
-        to442_grayscale(inputFrame, grayscale);
-
-        //Apply Sobel filter
-        to442_sobel(grayscale, sobel);
-
-        // Display the result
-        //imshow("Sobel Frame", grayscale);
-		imshow("Sobel Frame", sobel);
-
-        // Stop processing if 'x' key is pressed within 10 ms
+		// Stop processing if 'x' key is pressed within 10 ms
 		// of the last sobel frame is shown
-        if (waitKey(10) == 'x') {
-            break;
-        }
+		// Break the loop end if no more frames to grab
+        if (waitKey(10) == 'x' || inputFrame.empty()) {
+			threadSplitArgs.stop = 1;
+			pthread_barrier_wait(&barrierStart);
+			break;
+		}
+
+		printf("main thread reaches start barrier\n");
+		pthread_barrier_wait(&barrierStart);
+		printf("parent thread passed start barrier\n");
+	
+		// // Wait for grayScale to finish
+		// pthread_barrier_wait(&barrierGrayScale);
+
+		// printf("Parent passed graybarrier\n");
+		printf("parent reaches sobelbarrier\n");
+		// Wait for sobel to finish
+		pthread_barrier_wait(&barrierSobel);
+
+		printf("Parent passed sobelbarrier\n");
+
+		// Display Sobel frame
+		imshow("Sobel Frame", outputFrame);
+
+		printf("Parent displayed frame\n");
 
 		// Read next frame from the video
 		cap.read(inputFrame);
     }
 
+	pthread_barrier_wait(&barrierEnd);
     // Release the VideoCapture and close the window
     cap.release();
     //destroyAllWindows();
+	pthread_barrier_destroy(&barrierGrayScale);
+	pthread_barrier_destroy(&barrierSobel);
+	pthread_barrier_destroy(&barrierStart);
+	pthread_barrier_destroy(&barrierContinue);
+
+	// Join threads
+	for (int i = 0; i < 5; ++i) {
+        pthread_join(thread[i], NULL);
+    }
 
     return 0;
 }

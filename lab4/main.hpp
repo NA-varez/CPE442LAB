@@ -13,6 +13,11 @@
 #define _MAIN_H
 
 //Nothing here yet
+// //void* fnForThread1();
+// void* fnForThread2(void* threadArgs);
+// void* thread1Status;
+// void* thread2Status;
+
 
 #endif //- _MAIN_H
 
