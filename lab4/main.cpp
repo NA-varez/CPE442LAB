@@ -218,7 +218,7 @@ void* threadSobel(void* inputThreadArgs) {
 		// Wait for threads to complete the grayScaleFrame
 		printf("3S\n");
 		pthread_barrier_wait(&barrierGrayScale);
-		//if(stopProcess == 1) break;	
+		if(stopProcess == 1) break;	
 		//printf("sobel thread passed graybarrier\n");
 
 		// At this point, the section of the frame alotted for this thread is now grayscale
