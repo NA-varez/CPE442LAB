@@ -1,5 +1,4 @@
 /*********************************************
-*
 * File: main.cpp
 *
 * Description: Lab 4 uses threads to make the Lab 3
@@ -25,14 +24,13 @@
 using namespace cv;
 using namespace std;
 
-/*********************************************************/
+/***********************************************/
 // Function Definitions
 void* threadFrameSplit(void* threadSplitArgs);
 void* threadSobel(void* inputThreadArgs);
 
-// Struct and variable creation
-
-pthread_t thread[4];
+pthread_t splitThread;
+pthread_t sobelThread[3];
 
 struct threadSplitArgs {
 	Mat* input;
@@ -53,8 +51,7 @@ struct threadArgs {
 };
 
 pthread_barrier_t barrierSobel, barrierGrayScale, barrierStart, barrierContinue, barrierEnd;
-pthread_attr_t attr;
-/*********************************************************/
+/*********************************************/
 
 
 
@@ -85,15 +82,16 @@ void* threadFrameSplit(void* threadSplitArgs) {
 	threadArgs thread4Args = defaultThreadArgs;
 	
 	// 4 threads for 4 horizontal sections of the frame
-	pthread_create(&thread[1], NULL, threadSobel, (void *)&thread1Args);
-	pthread_create(&thread[2], NULL, threadSobel, (void *)&thread2Args);
-	pthread_create(&thread[3], NULL, threadSobel, (void *)&thread3Args);
-	pthread_create(&thread[4], NULL, threadSobel, (void *)&thread4Args);
-	printf("sobel threads created\n");
+	pthread_create(&sobelThread[0], NULL, threadSobel, (void *)&thread1Args);
+	pthread_create(&sobelThread[1], NULL, threadSobel, (void *)&thread2Args);
+	pthread_create(&sobelThread[2], NULL, threadSobel, (void *)&thread3Args);
+	pthread_create(&sobelThread[3], NULL, threadSobel, (void *)&thread4Args);
+	//printf("sobel threads created\n");
 
 	while(true) {
+		printf("1\n");
 		pthread_barrier_wait(&barrierStart);
-		printf("splitter has passed start barrier\n");
+		//printf("splitter has passed start barrier\n");
 		struct threadSplitArgs *pStruct = (struct threadSplitArgs*)threadSplitArgs;
 		//threadSplitArgs* pStruct = new threadSplitArgs();
 
@@ -138,8 +136,9 @@ void* threadFrameSplit(void* threadSplitArgs) {
 		thread4Args.start = (rows / 2) + (rows / 4) + 1;
 		thread4Args.end = rows - 1;
 		thread1Args.stop = stopProcess;
-
-		printf("splitter thread reaches CONTINUE BARRIER\n");
+		
+		printf("2\n");
+		//printf("splitter thread reaches CONTINUE BARRIER\n");
 		pthread_barrier_wait(&barrierContinue);
 
 		//Pad top and bottom border pixels as zero
@@ -159,15 +158,17 @@ void* threadFrameSplit(void* threadSplitArgs) {
 		}
 
 		// Wait for threads to reach barrier
+		printf("3\n");
 		pthread_barrier_wait(&barrierGrayScale);
-		printf("split thread passed graybarrier\n");
+		//printf("split thread passed graybarrier\n");
 		
-		printf("split thread reaches sobelbarrier\n");
+		//printf("split thread reaches sobelbarrier\n");
 		// Wait for threads to reach barrier
+		printf("4\n");
 		pthread_barrier_wait(&barrierSobel);
-		printf("split thread passed sobelbarrier\n");
+		//printf("split thread passed sobelbarrier\n");
 	}
-
+	printf("5\n");
 	pthread_barrier_wait(&barrierEnd);
 	return 0;
 }
@@ -182,9 +183,10 @@ void* threadFrameSplit(void* threadSplitArgs) {
 **********************************************/
 void* threadSobel(void* inputThreadArgs) {
 	while(true) {
-		printf("sobel thread reaches CONTINUE BARRIER\n");
+		//printf("sobel thread reaches CONTINUE BARRIER\n");
+		printf("2S\n");
 		pthread_barrier_wait(&barrierContinue);
-		printf("sobel thread has passed CONTINUE BARRIER\n");
+		//printf("sobel thread has passed CONTINUE BARRIER\n");
 		struct threadArgs *sobelStruct = (struct threadArgs*)inputThreadArgs;
 		
 		// Unpacking inputThreadArgs back to their respective var types
@@ -199,7 +201,7 @@ void* threadSobel(void* inputThreadArgs) {
 		if(stopProcess == 1) break;
 
 		for (int i = 0; i <= end; ++i) {						//ROWS
-			for (int j = 0; j < inputFrame->cols; ++j) {	//COLS
+			for (int j = 0; j < inputFrame->cols; ++j) {		//COLS
 				Vec3b pixel = inputFrame->at<Vec3b>(i, j);
 
 				//Red = pixel[2];
@@ -214,7 +216,9 @@ void* threadSobel(void* inputThreadArgs) {
 		}
 
 		// Wait for threads to complete the grayScaleFrame
-		pthread_barrier_wait(&barrierGrayScale);	
+		printf("3S\n");
+		pthread_barrier_wait(&barrierGrayScale);
+		//if(stopProcess == 1) break;	
 		//printf("sobel thread passed graybarrier\n");
 
 		// At this point, the section of the frame alotted for this thread is now grayscale
@@ -225,11 +229,11 @@ void* threadSobel(void* inputThreadArgs) {
 				//X and Y filter operations on surrounding intensity pixels
 				//Had to upgrade the variable type from uchar to int to prevent overflow
 				int g_x = (-1*grayScaleFrame->at<uchar>(i-1,j-1)) + grayScaleFrame->at<uchar>(i-1,j+1) +
-						(-2*grayScaleFrame->at<uchar>(i,j-1)) + 2*grayScaleFrame->at<uchar>(i,j+1) +
-						(-1*grayScaleFrame->at<uchar>(i+1,j-1)) + grayScaleFrame->at<uchar>(i+1,j+1);
+						  (-2*grayScaleFrame->at<uchar>(i,j-1)) + 2*grayScaleFrame->at<uchar>(i,j+1) +
+					      (-1*grayScaleFrame->at<uchar>(i+1,j-1)) + grayScaleFrame->at<uchar>(i+1,j+1);
 				int g_y = (-1*grayScaleFrame->at<uchar>(i-1,j-1)) + -1*grayScaleFrame->at<uchar>(i-1,j+1) +
-						(-2*grayScaleFrame->at<uchar>(i-1,j)) + 2*grayScaleFrame->at<uchar>(i+1,j) +
-						(1*grayScaleFrame->at<uchar>(i+1,j-1)) + 1*grayScaleFrame->at<uchar>(i+1,j+1);
+						  (-2*grayScaleFrame->at<uchar>(i-1,j)) + 2*grayScaleFrame->at<uchar>(i+1,j) +
+						  (1*grayScaleFrame->at<uchar>(i+1,j-1)) + 1*grayScaleFrame->at<uchar>(i+1,j+1);
 				
 
 				//Approximation of Sobel without using pow or sqrt
@@ -238,12 +242,13 @@ void* threadSobel(void* inputThreadArgs) {
 				outputFrame->at<uchar>(i, j) = saturate_cast<uchar>(std::abs(g_x) + std::abs(g_y));
 			}
 		}
-		printf("sobel thread reaches sobelbarrier\n");
+		//printf("sobel thread reaches sobelbarrier\n");
+		printf("4S\n");
 		// Wait for threads to finish Sobel frame before moving to the next frame
 		pthread_barrier_wait(&barrierSobel);
-		printf("sobel thread passed sobel barrier\n");
+		//printf("sobel thread passed sobel barrier\n");
 	}
-	
+	printf("5S\n");
 	pthread_barrier_wait(&barrierEnd);
 	return 0;
 }
@@ -274,22 +279,23 @@ int main(int argc, char** argv) {
 	Mat grayScaleFrame;
 	Mat outputFrame;
 
+	//printf("1\n");
 	// Read first frame from the video and creates an output frame of same size.
 	// The output frame is same size but single channel (1 unsigned char per pixel)
 	cap.read(inputFrame);
 	outputFrame.create(inputFrame.size(), CV_8UC1);
 	grayScaleFrame.create(inputFrame.size(), CV_8UC1);
 
-	// Initialize pthread number of barriers before threads can continue
-	pthread_barrier_init(&barrierGrayScale, NULL, 5);
-	pthread_barrier_init(&barrierSobel, NULL, 5);
-	pthread_barrier_init(&barrierStart, NULL, 1);
-	pthread_barrier_init(&barrierContinue, NULL, 5); // Makes sobel threads wait for split thread before beginning grayscale
-	pthread_barrier_init(&barrierEnd, NULL, 5);
-
-	// Initialize attribute for new threads to be joinable
+	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	// Initialize pthread number of barriers before threads can continue
+	pthread_barrier_init(&barrierGrayScale, NULL, 6);
+	pthread_barrier_init(&barrierSobel, NULL, 6);
+	pthread_barrier_init(&barrierStart, NULL, 2);
+	pthread_barrier_init(&barrierContinue, NULL, 5); // Makes sobel threads wait for split thread before beginning grayscale
+	pthread_barrier_init(&barrierEnd, NULL, 6);
 
 	// Initial set of struct for frame splitting thread before it is created
 	threadSplitArgs threadSplitArgs;
@@ -302,8 +308,8 @@ int main(int argc, char** argv) {
 	threadSplitArgs.stop = 0;
 
 	// 1 thread for splitting the input frame and feeding start and end rows to other 4 threads
-	pthread_create(&thread[0], NULL, threadFrameSplit, (void *)&threadSplitArgs);
-	
+	pthread_create(&splitThread, NULL, threadFrameSplit, (void *)&threadSplitArgs);
+	//printf("3\n");
 	//printf("splitter thread created\n");
 
     while (true) {
@@ -315,7 +321,7 @@ int main(int argc, char** argv) {
 		threadSplitArgs.rows = inputFrame.rows;
 		threadSplitArgs.cols = inputFrame.cols;
 
-		printf("splitter args set\n");
+		//printf("splitter args set\n");
 
 		// Stop processing if 'x' key is pressed within 10 ms
 		// of the last sobel frame is shown
@@ -326,29 +332,33 @@ int main(int argc, char** argv) {
 			break;
 		}
 
-		printf("main thread reaches start barrier\n");
+		printf("1P\n");
+		//printf("main thread reaches start barrier\n");
 		pthread_barrier_wait(&barrierStart);
-		printf("parent thread passed start barrier\n");
+		//printf("parent thread passed start barrier\n");
 	
 		// // Wait for grayScale to finish
-		// pthread_barrier_wait(&barrierGrayScale);
+		printf("3P\n");
+		pthread_barrier_wait(&barrierGrayScale);
 
 		// printf("Parent passed graybarrier\n");
-		printf("parent reaches sobelbarrier\n");
+		//printf("parent reaches sobelbarrier\n");
 		// Wait for sobel to finish
+		printf("4P\n");
 		pthread_barrier_wait(&barrierSobel);
 
-		printf("Parent passed sobelbarrier\n");
+		//printf("Parent passed sobelbarrier\n");
 
 		// Display Sobel frame
 		imshow("Sobel Frame", outputFrame);
 
-		printf("Parent displayed frame\n");
+		//printf("Parent displayed frame\n");
 
 		// Read next frame from the video
 		cap.read(inputFrame);
     }
 
+	printf("5P\n");
 	pthread_barrier_wait(&barrierEnd);
     // Release the VideoCapture and close the window
     cap.release();
@@ -357,11 +367,14 @@ int main(int argc, char** argv) {
 	pthread_barrier_destroy(&barrierSobel);
 	pthread_barrier_destroy(&barrierStart);
 	pthread_barrier_destroy(&barrierContinue);
+	pthread_barrier_destroy(&barrierEnd);
 
 	// Join threads
-	for (int i = 0; i < 5; ++i) {
-        pthread_join(thread[i], NULL);
+	for (int i = 0; i < 4; ++i) {
+        pthread_join(sobelThread[i], NULL);
     }
+
+	pthread_join(splitThread, NULL);
 
     return 0;
 }

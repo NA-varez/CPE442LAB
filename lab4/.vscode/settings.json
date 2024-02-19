@@ -2,7 +2,8 @@
     "files.associations": {
         "array": "cpp",
         "string_view": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "ostream": "cpp"
     },
     "cmake.configureOnOpen": false
 }
