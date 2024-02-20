@@ -1,9 +1,12 @@
-/*********************************************
+  /*********************************************
 *
 * File: main.cpp
 *
-* Description: Lab 4 uses threads to make the Lab 3
-				sobel filter faster
+* Description: Lab 3 main for sobel filter
+*				creates an executable that takes
+*				a video frame as input, converts the frame to grayscale
+				then converts the grayscale frame to sobel frames.
+				Outputs the frames in a new window.
 *
 * Author: Nicolas Alvarez
 *
@@ -13,7 +16,6 @@
 *			 that was reducing quality of sobel output.
 **********************************************/
 #include <stdio.h>
-#include <pthread.h>
 #include "sobel.hpp"
 #include "main.hpp"
 
@@ -94,6 +96,7 @@ void to442_sobel(Mat& input, Mat& output) {
 			//It is bigger than a uchar can hold.
 			output.at<uchar>(i, j) = saturate_cast<uchar>(std::abs(g_x) + std::abs(g_y));
 		}
+		
 	}
 
 	//Pad top and bottom border pixels as zero
@@ -113,89 +116,9 @@ void to442_sobel(Mat& input, Mat& output) {
 	}
 }
 
-/*********************************************
-* Function: threadFrameSplit
-*
-* Description: Converts input grayscale Mat frame to sobel
-* Input: Input full mat frame reference
-* Output: Output full sobel mat frame reference
-*
-**********************************************/
-void* threadFrameSplit(Mat& input, Mat& output) {
-	//might need to leave the size() function out of this becuase Mat& is just a reference
-	// the refereence cant support .size() ??????
 
-
-	//add barrier for the read running this function
-	//Feed Mat& references into threads computational functions
-		
-	//Stitch everything back together into full sobel frame
-	
-	//might not need Mat& output
-}
-
-/*********************************************
-* Function: threadSobel
-*
-* Description: Threading sobel into 4 threads
-* Input: Input arbitrary mat frame size 
-* Output: Output sobel mat frame reference
-*
-**********************************************/
-void* threadSobel(Mat& input, Mat& output) {
-
-
-
-	//Barrier 
-}
-
-
-//int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
-//*(*start_routine) (void *), void *arg);
-
-//thread[4]???????????????
-pthread_t thread[3];
-
-struct threadArgs {
-	int a;
-	int b;
-};
-
-void* fnForThread1();
-void* fnForThread2(void* threadArgs);
-void* thread1Status;
-void* thread2Status;
-
-pthread_barrier_t barrier;
-
-void setupPthreadBarrier(__uint16_t numThreads) {
-	pthread_barrier_init(&barrier, NULL, numThreads)
-}
-
-//int main(int argc, char *argv[]) {
 int main(int argc, char** argv) {
     
-	//might need this to be 5 if the thread that splits the stuff needs to be included
-	__uint16_t numThreads = 4;
-	setupPthreadBarrier(numThreads);
-
-	// Initialize attributes for new threads to be joinable
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-	//Create new threads running assigned void* functions
-	struct threadArgs = {.a = 0, .b = 1};
-	int retVal1 = pthread_create(&thread[0], NULL, fnForThread1, NULL);
-	int retVal2 = pthread_create(&thread[1], NULL, fnForThread2, (void *)&threadArgs);
-
-	// Parent thread will continue 
-	// until we reach a point when we wait for the child threads to finish
-	int retVal3 = pthread_join(thread[0], &thread1Status);
-	int retVal4 = pthread_join(thread[1], &thread2Status);
-	//Parent collects child thread's result
-
-
 	// Checks whether the number of command-line 
 	// arguments is sufficient (Should be ./main <videofile>)
 	if (argc != 2) {

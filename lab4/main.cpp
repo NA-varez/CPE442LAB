@@ -89,7 +89,7 @@ void* threadFrameSplit(void* threadSplitArgs) {
 	//printf("sobel threads created\n");
 
 	while(true) {
-		printf("1\n");
+		//printf("1\n");
 		pthread_barrier_wait(&barrierStart);
 		//printf("splitter has passed start barrier\n");
 		struct threadSplitArgs *pStruct = (struct threadSplitArgs*)threadSplitArgs;
@@ -137,7 +137,7 @@ void* threadFrameSplit(void* threadSplitArgs) {
 		thread4Args.end = rows - 1;
 		thread1Args.stop = stopProcess;
 		
-		printf("2\n");
+		//printf("2\n");
 		//printf("splitter thread reaches CONTINUE BARRIER\n");
 		pthread_barrier_wait(&barrierContinue);
 
@@ -158,17 +158,17 @@ void* threadFrameSplit(void* threadSplitArgs) {
 		}
 
 		// Wait for threads to reach barrier
-		printf("3\n");
+		//printf("3\n");
 		pthread_barrier_wait(&barrierGrayScale);
 		//printf("split thread passed graybarrier\n");
 		
 		//printf("split thread reaches sobelbarrier\n");
 		// Wait for threads to reach barrier
-		printf("4\n");
+		//printf("4\n");
 		pthread_barrier_wait(&barrierSobel);
 		//printf("split thread passed sobelbarrier\n");
 	}
-	printf("5\n");
+	//printf("5\n");
 	pthread_barrier_wait(&barrierEnd);
 	return 0;
 }
@@ -184,7 +184,7 @@ void* threadFrameSplit(void* threadSplitArgs) {
 void* threadSobel(void* inputThreadArgs) {
 	while(true) {
 		//printf("sobel thread reaches CONTINUE BARRIER\n");
-		printf("2S\n");
+		//printf("2S\n");
 		pthread_barrier_wait(&barrierContinue);
 		//printf("sobel thread has passed CONTINUE BARRIER\n");
 		struct threadArgs *sobelStruct = (struct threadArgs*)inputThreadArgs;
@@ -216,7 +216,7 @@ void* threadSobel(void* inputThreadArgs) {
 		}
 
 		// Wait for threads to complete the grayScaleFrame
-		printf("3S\n");
+		//printf("3S\n");
 		pthread_barrier_wait(&barrierGrayScale);
 		if(stopProcess == 1) break;	
 		//printf("sobel thread passed graybarrier\n");
@@ -243,12 +243,12 @@ void* threadSobel(void* inputThreadArgs) {
 			}
 		}
 		//printf("sobel thread reaches sobelbarrier\n");
-		printf("4S\n");
+		//printf("4S\n");
 		// Wait for threads to finish Sobel frame before moving to the next frame
 		pthread_barrier_wait(&barrierSobel);
 		//printf("sobel thread passed sobel barrier\n");
 	}
-	printf("5S\n");
+	//printf("5S\n");
 	pthread_barrier_wait(&barrierEnd);
 	return 0;
 }
@@ -332,19 +332,19 @@ int main(int argc, char** argv) {
 			break;
 		}
 
-		printf("1P\n");
+		//printf("1P\n");
 		//printf("main thread reaches start barrier\n");
 		pthread_barrier_wait(&barrierStart);
 		//printf("parent thread passed start barrier\n");
 	
 		// // Wait for grayScale to finish
-		printf("3P\n");
+		//printf("3P\n");
 		pthread_barrier_wait(&barrierGrayScale);
 
 		// printf("Parent passed graybarrier\n");
 		//printf("parent reaches sobelbarrier\n");
 		// Wait for sobel to finish
-		printf("4P\n");
+		//printf("4P\n");
 		pthread_barrier_wait(&barrierSobel);
 
 		//printf("Parent passed sobelbarrier\n");
@@ -358,7 +358,7 @@ int main(int argc, char** argv) {
 		cap.read(inputFrame);
     }
 
-	printf("5P\n");
+	//printf("5P\n");
 	pthread_barrier_wait(&barrierEnd);
     // Release the VideoCapture and close the window
     cap.release();
