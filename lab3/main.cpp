@@ -22,6 +22,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <iostream>
 #include <cmath>
 
 
@@ -149,9 +150,16 @@ int main(int argc, char** argv) {
 	grayscale.create(inputFrame.size(), CV_8UC1);
 	sobel.create(inputFrame.size(), CV_8UC1);
 
+	// Set video capture at the first frame
+	cap.set(CAP_PROP_POS_FRAMES, 0);
+	double start_time = (double)cv::getTickCount();
+
     while (true) {
+		// Read frame from the video
+		cap.read(inputFrame);
 
         if (inputFrame.empty()) {
+			cout << "No more frames found" << endl;
 			break; // Break the loop end if no more frames to grab
         }
 
@@ -162,22 +170,24 @@ int main(int argc, char** argv) {
         to442_sobel(grayscale, sobel);
 
         // Display the result
-        //imshow("Sobel Frame", grayscale);
-		imshow("Sobel Frame", sobel);
+        //imshow("Lab 3 Sobel Frame", grayscale);
+		imshow("Lab 3 Sobel Frame", sobel);
 
         // Stop processing if 'x' key is pressed within 10 ms
 		// of the last sobel frame is shown
-        if (waitKey(10) == 'x') {
+        if (waitKey(20) == 'x') {
+			cout << "Output stopped by user" << endl;
             break;
         }
-
-		// Read next frame from the video
-		cap.read(inputFrame);
     }
+
+	// Calculate elapsed time
+    double end_time = (double)cv::getTickCount();
+    double elapsed_time = (end_time - start_time) / cv::getTickFrequency();
+    cout << "Total processing time: " << elapsed_time << " seconds" << endl;
 
     // Release the VideoCapture and close the window
     cap.release();
-    //destroyAllWindows();
 
     return 0;
 }

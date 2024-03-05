@@ -1,7 +1,7 @@
 /*********************************************
 * File: main.cpp
 *
-* Description: Lab 4 uses threads to make the Lab 3
+* Description: Lab 4 uses multi-threading to make the Lab 3
 				sobel filter faster
 *
 * Author: Nicolas Alvarez
@@ -45,7 +45,7 @@ struct threadArgs {
 	Mat* input;
 	Mat* grayScale;
 	Mat* output;
-	int start; // I dont know whether to make these pointers or not , same goies for the rows and cols variables in the above struct
+	int start;
 	int end;
 	int stop;
 };
@@ -119,23 +119,23 @@ void* threadFrameSplit(void* threadSplitArgs) {
 		thread2Args.input = inputFrame;
 		thread2Args.grayScale = grayScaleFrame;
 		thread2Args.output = outputFrame;
-		thread2Args.start = (rows / 4) + 1; // might have to get rid of +1
+		thread2Args.start = (rows / 4) + 1;
 		thread2Args.end = rows / 2;
-		thread1Args.stop = stopProcess;
+		thread2Args.stop = stopProcess;
 
 		thread3Args.input = inputFrame;
 		thread3Args.grayScale = grayScaleFrame;
 		thread3Args.output = outputFrame;
 		thread3Args.start = (rows / 2) + 1;
 		thread3Args.end = (rows / 2) + (rows / 4);
-		thread1Args.stop = stopProcess;
+		thread3Args.stop = stopProcess;
 
 		thread4Args.input = inputFrame;
 		thread4Args.grayScale = grayScaleFrame;
 		thread4Args.output = outputFrame;
 		thread4Args.start = (rows / 2) + (rows / 4) + 1;
 		thread4Args.end = rows - 1;
-		thread1Args.stop = stopProcess;
+		thread4Args.stop = stopProcess;
 		
 		//printf("2\n");
 		//printf("splitter thread reaches CONTINUE BARRIER\n");
@@ -350,7 +350,7 @@ int main(int argc, char** argv) {
 		//printf("Parent passed sobelbarrier\n");
 
 		// Display Sobel frame
-		imshow("Sobel Frame", outputFrame);
+		imshow("Lab 4 Sobel Frame", outputFrame);
 
 		//printf("Parent displayed frame\n");
 
@@ -358,11 +358,10 @@ int main(int argc, char** argv) {
 		cap.read(inputFrame);
     }
 
-	//printf("5P\n");
 	pthread_barrier_wait(&barrierEnd);
     // Release the VideoCapture and close the window
     cap.release();
-    //destroyAllWindows();
+
 	pthread_barrier_destroy(&barrierGrayScale);
 	pthread_barrier_destroy(&barrierSobel);
 	pthread_barrier_destroy(&barrierStart);
