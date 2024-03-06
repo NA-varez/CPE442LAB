@@ -1,15 +1,12 @@
 /*********************************************************************
 * File: main.cpp
 *
-* Description: Lab 4 uses multi-threading to 
-*			   make the Lab 3 sobel filter faster
-*			   For each frame a new thread is created and destroyed
-*			   Two barriers are used to synchronize the grayscale and
-*			   sobel computations.
+* Description: Lab 5 uses intrinsics to complete vector operations
+*			   to optimize grayscale and sobel operations
 *
 * Author: Nicolas Alvarez
 *
-* Version: 0.1
+* Version: 0.2
 **********************************************************************/
 
 #include <stdio.h>
@@ -22,6 +19,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <cmath>
+#include <arm_neon.h>
 
 using namespace cv;
 using namespace std;
@@ -66,11 +64,57 @@ void* threadSobel(void* inputThreadArgs) {
 		int start = (sobelStruct->start);
 		int end = (sobelStruct->end);
 
+		// might need to increase size of pointer
+		uint16_t* rgb_pixel_pointer = inputFrame;
+		uint16_t* grayscale_pointer = grayScaleFrame;
 
+		/****************************Grayscale Computation***********************************/
+
+		// 2167, 4683, and 472 are scaling factors in Q14 format. Rather than using floating point
+		// numbers for the weights. The 14-bits that are allocated for the decimal point can be
+		// represented as a whole number to perform non-floating point operations. As long as the
+		// resulting number of the computation is scaled back to the appropriate range of values,
+		// the estimate using fixed-point arithmetic "Q14" will be suitable.
+		const uint16x8_t red_weight = {2167, 2167, 2167, 2167, 2167, 2167, 2167, 2167};
+		const uint16x8_t green_weight = {4683, 4683, 4683, 4683, 4683, 4683, 4683, 4683};
+		const uint16x8_t blue_weight = {472, 472, 472, 472, 472, 472, 472, 472};
 
 		for (int i = start; i < end; ++i) {					//ROWS
-			for (int j = 0; j < inputFrame->cols; ++j) {	//COLS
-				Vec3b pixel = inputFrame->at<Vec3b>(i, j);
+
+			// Pointer for the beginning of each row
+			rgb_pixel_pointer = inputFrame->ptr<uint8_t>(row);
+			grayscale_pointer = grayScaleFrame->ptr<uint8_t>(row);
+
+			// Operates up to the number cols that is divisible by 8
+			for (int j = 0; j < ((int)(inputFrame->cols) / 8) * 8; ++j) {	//COLS
+				// Load 16 bits, 8 of them, 3 packed vectors
+				uint16x8x3_t rgb_pixels = vld3_u8(rgb_pixel_pointer);
+
+				// Access each packed vector of rgb_pixels for all 3 colors
+				uint16x8_t red_channel = rgb_pixels.val[0];
+				uint16x8_t green_channel = rgb_pixels.val[1];
+				uint16x8_t blue_channel = rgb_pixels.val[2];
+
+				// Apply grayscale conversion weights, and shift result right by 14 bits to
+				// map back to appropriately sized values for the grayscale intensity
+				uint16x8_t red_weighted = vshrq_n_u16(vmulq_u16(red_channel, red_weight), 14);
+				uint16x8_t green_weighted = vshrq_n_u16(vmulq_u16(green_channel, green_weight), 14);
+				uint16x8_t blue_weighted = vshrq_n_u16(vmulq_u16(blue_channel, blue_weight), 14);
+
+				// Sum weighted color channels together for grayscale intensity
+				uint16x8_t grayscale_pixels = vaddq_u16(vaddq_u16(red_weighted, green_weighted), blue_weighted);
+
+				// Stores the resulting grayscale pixels at the specified pointer
+				vst1q_u16(grayscale_pointer, grayscale_pixels);
+
+				// Increment pointers for next iteration
+				rgb_pixel_pointer += 8; // move to next 8 rgb pixels
+				grayscale_pointer += 8; // moves to next empty position for 8 more grayscale pixels
+			}	
+
+			// Computer remaining number of cols that was not divisible by 8 using traditional 
+			for (int k = (inputFrame->cols - (inputFrame->cols % 8)); k < inputFrame->cols; ++k) {
+				Vec3b pixel = inputFrame->at<Vec3b>(i, k);
 
 				//Red = pixel[2];
 				//Green = pixel[1];
@@ -79,17 +123,84 @@ void* threadSobel(void* inputThreadArgs) {
 				//ITU-R (BT.709) recommended algorithm for grayscale
 				uchar grayPixel = (0.2126 * pixel[2] + 0.7152 * pixel[1] + 0.0722 * pixel[0]);
 				//All pixels now represent 1 'intensity' value that will be used in the sobel
-				grayScaleFrame->at<uchar>(i, j) = grayPixel;
-			}	
+				grayScaleFrame->at<uchar>(i, k) = grayPixel;
+			}
 		}
-
-		// Wait for threads to complete the grayScaleFrame
+		
+		//All pixels now represent 1 'intensity' value that will be used in the sobel
+		// Wait for all threads to complete the grayScaleFrame
 		pthread_barrier_wait(&barrierGrayScale);
+
+		/****************************Sobel Compuations***********************************/
+
+		const int16x8_t sobel_x_above = {-1, 0, 1, -1, 0, 1, 0, 0};
+		const int16x8_t sobel_x_current = {-2, 0, 2, -2, 0, 2, 0, 0};
+		const int16x8_t sobel_x_below = {-1, 0, 1, -1, 0, 1, 0, 0};
+
+		const int16x8_t sobel_y_above = {1, 2, 1, 1, 2, 1, 0, 0};
+		const int16x8_t sobel_y_current = {0, 0, 0, 0, 0, 0, 0, 0};
+		const int16x8_t sobel_y_below = {-1, -2, -1, -1, -2, -1, 0, 0};
+
+		const int width = outputFrame->cols;
 
 		// At this point, the section of the frame alotted for this thread is now grayscale
 		// Next is to pass the grayscale through the sobel filter
 		for (int i = start; i < end; ++i) {
-			for (int j = 1; j < outputFrame->cols; ++j) {
+
+			// Pointer for the beginning of each row
+			uint16_t* row_above = grayScaleFrame->ptr<uint8_t>(row - 1);
+			uint16_t* row_current = grayScaleFrame->ptr<uint8_t>(row);
+			uint16_t* row_below = grayScaleFrame->ptr<uint8_t>(row + 1);
+
+
+			for (int col = 1; col < outputFrame->cols; col+=2) {
+
+				//int 8x16 vld1q_s8
+				//vectorize per pixel operation
+				int16x8_t above_channel = vld1q_s16(row_above);
+				int16x8_t current_channel = vld1q_s16(row_current);
+				int16x8_t below_channel = vld1q_s16(row_below);
+
+				int16x8_t g_x_vec = vaddq_s16(vaddq_s16(vmulq_s16(sobel_x_above, above_channel),
+													    vmulq_s16(sobel_x_current, current_channel)),
+													    vmulq_s16(sobel_x_below, below_channel));
+				// add 0 and 2 for first pixel
+				int16_t g_x_result_1 = vgetq_lane_s16(g_x_vec, 0) + vgetq_lane_s16(g_x_vec, 2);
+
+				// add 3 and 5 for second pixel
+				int16_t g_x_result_2 = vgetq_lane_s16(g_x_vec, 3) + vgetq_lane_s16(g_x_vec, 5);
+
+				int16x8_t g_y_vec = vaddq_s16(vaddq_s16(vmulq_s16(sobel_y_above, above_channel),
+													    vmulq_s16(sobel_y_current, current_channel)),
+													    vmulq_s16(sobel_y_below, below_channel));
+				// add 0, 1, and 2 for first pixel
+				int16_t g_y_result_1 = vgetq_lane_s16(g_y_vec, 0) + vgetq_lane_s16(g_y_vec, 1) 
+																  + vgetq_lane_s16(g_y_vec, 2);
+
+				// add 3, 4, and 5 for second pixel
+				int16_t g_y_result_2 = vgetq_lane_s16(g_y_vec, 3) + vgetq_lane_s16(g_y_vec, 4) 
+																  + vgetq_lane_s16(g_y_vec, 5);
+				
+				//might be an issue with the way I am just setting int16_t to the result
+				//might have to use a vstore somehow
+				//maybe not, the vget does just return a int16_t value
+
+				uint16_t gradient_mag_1 = saturate_cast<uchar>(std::abs(g_x_result_1) + std::abs(g_y_result_1));
+				uint16_t gradient_mag_2 = saturate_cast<uchar>(std::abs(g_x_result_2) + std::abs(g_y_result_2));
+
+				// store result								
+				outputFrame->at<uchar>(row, col) = gradient_mag_1;
+				outputFrame->at<uchar>(row, col + 1) = gradient_mag_2;
+
+				// Increment row pointers by n2 pixel locations
+				row_above += 2;
+				row_current += 2;
+				row_below += 2;
+			}
+		}
+
+		// Operate on remaining pixles
+		for(int j = (inputFrame->cols - (inputFrame->cols % 2)); j < inputFrame->cols; j++) {
 
 				//X and Y filter operations on surrounding intensity pixels
 				//Had to upgrade the variable type from uchar to int to prevent overflow
@@ -105,8 +216,9 @@ void* threadSobel(void* inputThreadArgs) {
 				//A saturate cast of uchar is used to cut off the size of the computation if 
 				//It is bigger than a uchar can hold.
 				outputFrame->at<uchar>(i, j) = saturate_cast<uchar>(std::abs(g_x) + std::abs(g_y));
-			}
 		}
+
+
 		// Wait for threads to finish Sobel frame before moving to the next frame
 		pthread_barrier_wait(&barrierSobel);
 		return 0;
@@ -181,7 +293,7 @@ int main(int argc, char** argv) {
 
 		// Read next frame from the video
 		cap.read(inputFrame);
-		//printf("Read\n");
+		printf("Read\n");
 		
 		thread1Args.input = &inputFrame;
 		thread1Args.grayScale = &grayScaleFrame;
@@ -215,11 +327,11 @@ int main(int argc, char** argv) {
 
 		// Wait for grayScale to finish
 		pthread_barrier_wait(&barrierGrayScale);
-		//printf("G\n");
+		printf("G\n");
 
 		// Wait for sobel to finish
 		pthread_barrier_wait(&barrierSobel);
-		//printf("S\n");
+		printf("S\n");
 		
 		//Pad top and bottom border pixels as zero
 		for(int i = 0; i <= inputFrame.cols; ++i) {
@@ -244,7 +356,7 @@ int main(int argc, char** argv) {
 		for (int i = 0; i < 4; ++i) {
         	pthread_join(sobelThread[i], NULL);
     	}
-		//printf("Joined\n");
+		printf("Joined\n");
     }
 
 	// Calculate elapsed time
