@@ -19,6 +19,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <cmath>
+#include <arm_neon.h>
 
 using namespace cv;
 using namespace std;
@@ -64,8 +65,8 @@ void* threadSobel(void* inputThreadArgs) {
 		int end = (sobelStruct->end);
 
 		// might need to increase size of pointer
-		Mat* rgb_pixel_pointer = inputFrame;
-		Mat* grayscale_pointer = grayScaleFrame;
+		uchar* rgb_pixel_pointer = NULL;
+		uchar* grayscale_pointer = NULL;
 
 		/****************************Grayscale Computation***********************************/
 
@@ -74,15 +75,15 @@ void* threadSobel(void* inputThreadArgs) {
 		// represented as a whole number to perform non-floating point operations. As long as the
 		// resulting number of the computation is scaled back to the appropriate range of values,
 		// the estimate using fixed-point arithmetic "Q14" will be suitable.
-		const uint16x8_t red_weight = {2167, 2167, 2167, 2167, 2167, 2167, 2167, 2167};
-		const uint16x8_t green_weight = {4683, 4683, 4683, 4683, 4683, 4683, 4683, 4683};
-		const uint16x8_t blue_weight = {472, 472, 472, 472, 472, 472, 472, 472};
+		uint16x8_t red_weight = {2167, 2167, 2167, 2167, 2167, 2167, 2167, 2167};
+		uint16x8_t green_weight = {4683, 4683, 4683, 4683, 4683, 4683, 4683, 4683};
+		uint16x8_t blue_weight = {472, 472, 472, 472, 472, 472, 472, 472};
 
 		for (int i = start; i < end; ++i) {					//ROWS
 
 			// Pointer for the beginning of each row
-			rgb_pixel_pointer = inputFrame->ptr<uint8_t>(i);
-			grayscale_pointer = grayScaleFrame->ptr<uint8_t>(i);
+			rgb_pixel_pointer = inputFrame->ptr(i);
+			grayscale_pointer = grayScaleFrame->ptr(i);
 
 			// Operates up to the number cols that is divisible by 8
 			for (int j = 0; j < ((int)(inputFrame->cols) / 8) * 8; ++j) {	//COLS
