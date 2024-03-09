@@ -298,17 +298,17 @@ int main(int argc, char** argv) {
 		//Pad top and bottom border pixels as zero
 		for(int i = 0; i <= inputFrame.cols; ++i) {
 			//First row
-			grayScaleFrame.at<uchar>(0, i) = 0;
+			outputFrame.at<uchar>(0, i) = 0;
 			//Last row
-			grayScaleFrame.at<uchar>(inputFrame.rows - 1, i) = 0;
+			outputFrame.at<uchar>(inputFrame.rows - 1, i) = 0;
 		}
 
 		//Pad left and right border pixels as zero
 		for(int j = 0; j <= inputFrame.rows; ++j) {
 			//First column
-			grayScaleFrame.at<uchar>(j, 0) = 0;
+			outputFrame.at<uchar>(j, 0) = 0;
 			//Last column
-			grayScaleFrame.at<uchar>(j, inputFrame.cols - 1) = 0;
+			outputFrame.at<uchar>(j, inputFrame.cols - 1) = 0;
 		}
 
 		// Display Sobel frame
