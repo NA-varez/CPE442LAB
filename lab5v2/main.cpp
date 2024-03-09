@@ -68,6 +68,8 @@ void* threadSobel(void* inputThreadArgs) {
 		uchar* rgb_pixel_pointer = NULL;
 		uchar* grayscale_pointer = NULL;
 
+		printf("Non-intrinsic initialization within threadSobel function");
+
 		/****************************Grayscale Computation***********************************/
 
 		// 2167, 4683, and 472 are scaling factors in Q14 format. Rather than using floating point
@@ -79,11 +81,15 @@ void* threadSobel(void* inputThreadArgs) {
 		uint16x8_t green_weight = {4683, 4683, 4683, 4683, 4683, 4683, 4683, 4683};
 		uint16x8_t blue_weight = {472, 472, 472, 472, 472, 472, 472, 472};
 
+		printf("Weights created");
+
 		for (int i = start; i < end; ++i) {					//ROWS
 
 			// Pointer for the beginning of each row
 			rgb_pixel_pointer = inputFrame->ptr(i);
 			grayscale_pointer = grayScaleFrame->ptr(i);
+
+			printf("Pointers created");
 
 			// Operates up to the number cols that is divisible by 8
 			for (int j = 0; j < ((int)(inputFrame->cols) / 8) * 8; ++j) {	//COLS
@@ -112,6 +118,8 @@ void* threadSobel(void* inputThreadArgs) {
 				grayscale_pointer += 8; // moves to next empty position for 8 more grayscale pixels
 			}	
 
+			printf("Start of remaining grayscale pixels");
+
 			// Computer remaining number of cols that was not divisible by 8 using traditional 
 			for (int k = (inputFrame->cols - (inputFrame->cols % 8)); k < inputFrame->cols; ++k) {
 				Vec3b pixel = inputFrame->at<Vec3b>(i, k);
@@ -126,6 +134,8 @@ void* threadSobel(void* inputThreadArgs) {
 				grayScaleFrame->at<uchar>(i, k) = grayPixel;
 			}
 		}
+		
+		printf("Grayscale barrier");
 		
 		//All pixels now represent 1 'intensity' value that will be used in the sobel
 		// Wait for all threads to complete the grayScaleFrame
