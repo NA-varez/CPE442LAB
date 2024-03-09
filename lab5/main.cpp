@@ -246,12 +246,6 @@ void* threadSobel(void* inputThreadArgs) {
 
 		}															// End rows loop
 
-		//
-		// Need to handle the remaining pixels here
-		//
-		//
-
-
 		pthread_barrier_wait(&barrierGrayScale);
 
 		if(stopProcess == 1) break;	
