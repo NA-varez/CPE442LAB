@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I"/home/na/CPE442LAB/lab4v3/inc/*.hpp" -isystem /usr/include/opencv4
+CXX_INCLUDES = -I"/home/na/CPE442LAB/lab5v2/inc/*.hpp" -isystem /usr/include/opencv4
 
 CXX_FLAGS =  -pthread
 

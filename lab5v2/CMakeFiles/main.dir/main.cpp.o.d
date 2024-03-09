@@ -1,4 +1,4 @@
-CMakeFiles/main.dir/main.cpp.o: /home/na/CPE442LAB/lab5v2/main.cpp \
+CMakeFiles/main.dir/main.cpp.o: /home/na/CPE442LAB/lab4v3/main.cpp \
  /usr/include/stdc-predef.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -51,7 +51,7 @@ CMakeFiles/main.dir/main.cpp.o: /home/na/CPE442LAB/lab5v2/main.cpp \
  /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct___jmp_buf_tag.h \
  /usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h \
- /home/na/CPE442LAB/lab5v2/sobel.hpp /home/na/CPE442LAB/lab5v2/main.hpp \
+ /home/na/CPE442LAB/lab4v3/sobel.hpp /home/na/CPE442LAB/lab4v3/main.hpp \
  /usr/include/opencv4/opencv2/opencv.hpp \
  /usr/include/opencv4/opencv2/opencv_modules.hpp \
  /usr/include/opencv4/opencv2/core.hpp \

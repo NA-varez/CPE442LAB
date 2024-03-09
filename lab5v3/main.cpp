@@ -19,6 +19,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <cmath>
+#include <arm_neon.h>
 
 using namespace cv;
 using namespace std;
@@ -152,7 +153,54 @@ void* threadSobel(void* inputThreadArgs) {
 			uint16_t* row_below = grayScaleFrame->ptr<uint8_t>(row + 1);
 
 
-			for (int j = 1; j < outputFrame->cols; ++j) {
+			for (int col = 1; col < outputFrame->cols; col+=2) {
+
+				//int 8x16 vld1q_s8
+				//vectorize per pixel operation
+				int16x8_t above_channel = vld1q_s16(row_above);
+				int16x8_t current_channel = vld1q_s16(row_current);
+				int16x8_t below_channel = vld1q_s16(row_below);
+
+				int16x8_t g_x_vec = vaddq_s16(vaddq_s16(vmulq_s16(sobel_x_above, above_channel),
+													    vmulq_s16(sobel_x_current, current_channel)),
+													    vmulq_s16(sobel_x_below, below_channel));
+				// add 0 and 2 for first pixel
+				int16_t g_x_result_1 = vgetq_lane_s16(g_x_vec, 0) + vgetq_lane_s16(g_x_vec, 2);
+
+				// add 3 and 5 for second pixel
+				int16_t g_x_result_2 = vgetq_lane_s16(g_x_vec, 3) + vgetq_lane_s16(g_x_vec, 5);
+
+				int16x8_t g_y_vec = vaddq_s16(vaddq_s16(vmulq_s16(sobel_y_above, above_channel),
+													    vmulq_s16(sobel_y_current, current_channel)),
+													    vmulq_s16(sobel_y_below, below_channel));
+				// add 0, 1, and 2 for first pixel
+				int16_t g_y_result_1 = vgetq_lane_s16(g_y_vec, 0) + vgetq_lane_s16(g_y_vec, 1) 
+																  + vgetq_lane_s16(g_y_vec, 2);
+
+				// add 3, 4, and 5 for second pixel
+				int16_t g_y_result_2 = vgetq_lane_s16(g_y_vec, 3) + vgetq_lane_s16(g_y_vec, 4) 
+																  + vgetq_lane_s16(g_y_vec, 5);
+				
+				//might be an issue with the way I am just setting int16_t to the result
+				//might have to use a vstore somehow
+				//maybe not, the vget does just return a int16_t value
+
+				uint16_t gradient_mag_1 = saturate_cast<uchar>(std::abs(g_x_result_1) + std::abs(g_y_result_1));
+				uint16_t gradient_mag_2 = saturate_cast<uchar>(std::abs(g_x_result_2) + std::abs(g_y_result_2));
+
+				// store result								
+				outputFrame->at<uchar>(row, col) = gradient_mag_1;
+				outputFrame->at<uchar>(row, col + 1) = gradient_mag_2;
+
+				// Increment row pointers by n2 pixel locations
+				row_above += 2;
+				row_current += 2;
+				row_below += 2;
+			}
+		}
+
+		// Operate on remaining pixles
+		for(int j = (inputFrame->cols - (inputFrame->cols % 2)); j < inputFrame->cols; j++) {
 
 				//X and Y filter operations on surrounding intensity pixels
 				//Had to upgrade the variable type from uchar to int to prevent overflow
@@ -168,8 +216,9 @@ void* threadSobel(void* inputThreadArgs) {
 				//A saturate cast of uchar is used to cut off the size of the computation if 
 				//It is bigger than a uchar can hold.
 				outputFrame->at<uchar>(i, j) = saturate_cast<uchar>(std::abs(g_x) + std::abs(g_y));
-			}
 		}
+
+
 		// Wait for threads to finish Sobel frame before moving to the next frame
 		pthread_barrier_wait(&barrierSobel);
 		return 0;
@@ -244,7 +293,7 @@ int main(int argc, char** argv) {
 
 		// Read next frame from the video
 		cap.read(inputFrame);
-		//printf("Read\n");
+		printf("Read\n");
 		
 		thread1Args.input = &inputFrame;
 		thread1Args.grayScale = &grayScaleFrame;
@@ -278,11 +327,11 @@ int main(int argc, char** argv) {
 
 		// Wait for grayScale to finish
 		pthread_barrier_wait(&barrierGrayScale);
-		//printf("G\n");
+		printf("G\n");
 
 		// Wait for sobel to finish
 		pthread_barrier_wait(&barrierSobel);
-		//printf("S\n");
+		printf("S\n");
 		
 		//Pad top and bottom border pixels as zero
 		for(int i = 0; i <= inputFrame.cols; ++i) {
@@ -307,7 +356,7 @@ int main(int argc, char** argv) {
 		for (int i = 0; i < 4; ++i) {
         	pthread_join(sobelThread[i], NULL);
     	}
-		//printf("Joined\n");
+		printf("Joined\n");
     }
 
 	// Calculate elapsed time

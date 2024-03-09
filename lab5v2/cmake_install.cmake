@@ -1,4 +1,4 @@
-# Install script for directory: /home/na/CPE442LAB/lab5v2
+# Install script for directory: /home/na/CPE442LAB/lab4v3
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/na/CPE442LAB/lab5v2/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/na/CPE442LAB/lab4v3/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
