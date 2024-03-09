@@ -121,18 +121,18 @@ void* threadSobel(void* inputThreadArgs) {
 			//printf("Start of remaining grayscale pixels");
 
 			// Computer remaining number of cols that was not divisible by 8 using traditional 
-			for (int k = (inputFrame->cols - ((int)inputFrame->cols % 8)); k < inputFrame->cols; ++k) {
-				Vec3b pixel = inputFrame->at<Vec3b>(i, k);
+			// for (int k = (inputFrame->cols - ((int)inputFrame->cols % 8)); k < inputFrame->cols; ++k) {
+			// 	Vec3b pixel = inputFrame->at<Vec3b>(i, k);
 
-				//Red = pixel[2];
-				//Green = pixel[1];
-				//Blue = pixel[0];
+			// 	//Red = pixel[2];
+			// 	//Green = pixel[1];
+			// 	//Blue = pixel[0];
 
-				//ITU-R (BT.709) recommended algorithm for grayscale
-				uchar grayPixel = (0.2126 * pixel[2] + 0.7152 * pixel[1] + 0.0722 * pixel[0]);
-				//All pixels now represent 1 'intensity' value that will be used in the sobel
-				grayScaleFrame->at<uchar>(i, k) = grayPixel;
-			}
+			// 	//ITU-R (BT.709) recommended algorithm for grayscale
+			// 	uchar grayPixel = (0.2126 * pixel[2] + 0.7152 * pixel[1] + 0.0722 * pixel[0]);
+			// 	//All pixels now represent 1 'intensity' value that will be used in the sobel
+			// 	grayScaleFrame->at<uchar>(i, k) = grayPixel;
+			// }
 		}
 		
 		printf("Grayscale barrier");
@@ -141,46 +141,46 @@ void* threadSobel(void* inputThreadArgs) {
 		// Wait for all threads to complete the grayScaleFrame
 		pthread_barrier_wait(&barrierGrayScale);
 
-		/****************************Sobel Compuations***********************************/
+		// /****************************Sobel Compuations***********************************/
 
-		// const int16x8_t sobel_x_above = {-1, 0, 1, -1, 0, 1, 0, 0};
-		// const int16x8_t sobel_x_current = {-2, 0, 2, -2, 0, 2, 0, 0};
-		// const int16x8_t sobel_x_below = {-1, 0, 1, -1, 0, 1, 0, 0};
+		// // const int16x8_t sobel_x_above = {-1, 0, 1, -1, 0, 1, 0, 0};
+		// // const int16x8_t sobel_x_current = {-2, 0, 2, -2, 0, 2, 0, 0};
+		// // const int16x8_t sobel_x_below = {-1, 0, 1, -1, 0, 1, 0, 0};
 
-		// const int16x8_t sobel_y_above = {1, 2, 1, 1, 2, 1, 0, 0};
-		// const int16x8_t sobel_y_current = {0, 0, 0, 0, 0, 0, 0, 0};
-		// const int16x8_t sobel_y_below = {-1, -2, -1, -1, -2, -1, 0, 0};
+		// // const int16x8_t sobel_y_above = {1, 2, 1, 1, 2, 1, 0, 0};
+		// // const int16x8_t sobel_y_current = {0, 0, 0, 0, 0, 0, 0, 0};
+		// // const int16x8_t sobel_y_below = {-1, -2, -1, -1, -2, -1, 0, 0};
 
-		// const int width = outputFrame->cols;
+		// // const int width = outputFrame->cols;
 
-		// At this point, the section of the frame alotted for this thread is now grayscale
-		// Next is to pass the grayscale through the sobel filter
-		for (int i = start; i < end; ++i) {
+		// // At this point, the section of the frame alotted for this thread is now grayscale
+		// // Next is to pass the grayscale through the sobel filter
+		// for (int i = start; i < end; ++i) {
 
-			// Pointer for the beginning of each row
-			// uint16_t* row_above = grayScaleFrame->ptr<uint8_t>(row - 1);
-			// uint16_t* row_current = grayScaleFrame->ptr<uint8_t>(row);
-			// uint16_t* row_below = grayScaleFrame->ptr<uint8_t>(row + 1);
+		// 	// Pointer for the beginning of each row
+		// 	// uint16_t* row_above = grayScaleFrame->ptr<uint8_t>(row - 1);
+		// 	// uint16_t* row_current = grayScaleFrame->ptr<uint8_t>(row);
+		// 	// uint16_t* row_below = grayScaleFrame->ptr<uint8_t>(row + 1);
 
 
-			for (int j = 1; j < outputFrame->cols; ++j) {
+		// 	for (int j = 1; j < outputFrame->cols; ++j) {
 
-				//X and Y filter operations on surrounding intensity pixels
-				//Had to upgrade the variable type from uchar to int to prevent overflow
-				int g_x = (-1*grayScaleFrame->at<uchar>(i-1,j-1)) + grayScaleFrame->at<uchar>(i-1,j+1) +
-						  (-2*grayScaleFrame->at<uchar>(i,j-1)) + 2*grayScaleFrame->at<uchar>(i,j+1) +
-					      (-1*grayScaleFrame->at<uchar>(i+1,j-1)) + grayScaleFrame->at<uchar>(i+1,j+1);
-				int g_y = (-1*grayScaleFrame->at<uchar>(i-1,j-1)) + -1*grayScaleFrame->at<uchar>(i-1,j+1) +
-						  (-2*grayScaleFrame->at<uchar>(i-1,j)) + 2*grayScaleFrame->at<uchar>(i+1,j) +
-						  (1*grayScaleFrame->at<uchar>(i+1,j-1)) + 1*grayScaleFrame->at<uchar>(i+1,j+1);
+		// 		//X and Y filter operations on surrounding intensity pixels
+		// 		//Had to upgrade the variable type from uchar to int to prevent overflow
+		// 		int g_x = (-1*grayScaleFrame->at<uchar>(i-1,j-1)) + grayScaleFrame->at<uchar>(i-1,j+1) +
+		// 				  (-2*grayScaleFrame->at<uchar>(i,j-1)) + 2*grayScaleFrame->at<uchar>(i,j+1) +
+		// 			      (-1*grayScaleFrame->at<uchar>(i+1,j-1)) + grayScaleFrame->at<uchar>(i+1,j+1);
+		// 		int g_y = (-1*grayScaleFrame->at<uchar>(i-1,j-1)) + -1*grayScaleFrame->at<uchar>(i-1,j+1) +
+		// 				  (-2*grayScaleFrame->at<uchar>(i-1,j)) + 2*grayScaleFrame->at<uchar>(i+1,j) +
+		// 				  (1*grayScaleFrame->at<uchar>(i+1,j-1)) + 1*grayScaleFrame->at<uchar>(i+1,j+1);
 				
 
-				//Approximation of Sobel without using pow or sqrt
-				//A saturate cast of uchar is used to cut off the size of the computation if 
-				//It is bigger than a uchar can hold.
-				outputFrame->at<uchar>(i, j) = saturate_cast<uchar>(std::abs(g_x) + std::abs(g_y));
-			}
-		}
+		// 		//Approximation of Sobel without using pow or sqrt
+		// 		//A saturate cast of uchar is used to cut off the size of the computation if 
+		// 		//It is bigger than a uchar can hold.
+		// 		outputFrame->at<uchar>(i, j) = saturate_cast<uchar>(std::abs(g_x) + std::abs(g_y));
+		// 	}
+		// }
 		// Wait for threads to finish Sobel frame before moving to the next frame
 		pthread_barrier_wait(&barrierSobel);
 		return 0;
@@ -298,21 +298,21 @@ int main(int argc, char** argv) {
 		//Pad top and bottom border pixels as zero
 		for(int i = 0; i <= inputFrame.cols; ++i) {
 			//First row
-			outputFrame.at<uchar>(0, i) = 0;
+			grayScaleFrame.at<uchar>(0, i) = 0;
 			//Last row
-			outputFrame.at<uchar>(inputFrame.rows - 1, i) = 0;
+			grayScaleFrame.at<uchar>(inputFrame.rows - 1, i) = 0;
 		}
 
 		//Pad left and right border pixels as zero
 		for(int j = 0; j <= inputFrame.rows; ++j) {
 			//First column
-			outputFrame.at<uchar>(j, 0) = 0;
+			grayScaleFrame.at<uchar>(j, 0) = 0;
 			//Last column
-			outputFrame.at<uchar>(j, inputFrame.cols - 1) = 0;
+			grayScaleFrame.at<uchar>(j, inputFrame.cols - 1) = 0;
 		}
 
 		// Display Sobel frame
-		imshow("Lab 4 Sobel Frame", outputFrame);
+		imshow("Lab 4 Sobel Frame", grayScaleFrame);
 
 		// Join threads
 		for (int i = 0; i < 4; ++i) {
