@@ -88,7 +88,7 @@ void* threadSobel(void* inputThreadArgs) {
 			// Operates up to the number cols that is divisible by 8
 			for (int j = 0; j < ((int)(inputFrame->cols) / 8) * 8; ++j) {	//COLS
 				// Load 16 bits, 8 of them, 3 packed vectors
-				uint16x8x3_t rgb_pixels = vld3q_s16(rgb_pixel_pointer);
+				uint16x8x3_t rgb_pixels = vld3q_s16((int16_t*)rgb_pixel_pointer);
 
 				// Access each packed vector of rgb_pixels for all 3 colors
 				uint16x8_t red_channel = rgb_pixels.val[0];
