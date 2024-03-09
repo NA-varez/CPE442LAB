@@ -64,8 +64,8 @@ void* threadSobel(void* inputThreadArgs) {
 		int end = (sobelStruct->end);
 
 		// might need to increase size of pointer
-		uint16_t* rgb_pixel_pointer = inputFrame;
-		uint16_t* grayscale_pointer = grayScaleFrame;
+		Mat* rgb_pixel_pointer = inputFrame;
+		Mat* grayscale_pointer = grayScaleFrame;
 
 		/****************************Grayscale Computation***********************************/
 
