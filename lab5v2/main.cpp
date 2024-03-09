@@ -81,8 +81,8 @@ void* threadSobel(void* inputThreadArgs) {
 		for (int i = start; i < end; ++i) {					//ROWS
 
 			// Pointer for the beginning of each row
-			rgb_pixel_pointer = inputFrame->ptr<uint8_t>(row);
-			grayscale_pointer = grayScaleFrame->ptr<uint8_t>(row);
+			rgb_pixel_pointer = inputFrame->ptr<uint8_t>(i);
+			grayscale_pointer = grayScaleFrame->ptr<uint8_t>(i);
 
 			// Operates up to the number cols that is divisible by 8
 			for (int j = 0; j < ((int)(inputFrame->cols) / 8) * 8; ++j) {	//COLS
