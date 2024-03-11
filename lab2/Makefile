@@ -6,7 +6,7 @@ ODIR = obj
 IDIR = include
 SRCDIR = src
 
-_DEPS = DisplayImage.h
+_DEPS = DisplayImage.hpp
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 _OBJ = DisplayImage.o
