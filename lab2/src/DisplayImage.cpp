@@ -12,15 +12,22 @@
 **********************************************/
 
 #include <stdio.h>
+#include <iostream>
 #include <opencv2/opencv.hpp>
-#include "DisplayImage.h"
+#include "DisplayImage.hpp"
 
 using namespace cv;
+using namespace std;
 
 int main(int num, char** argv)
 {
 	Mat image;
 	image = imread(argv[1], IMREAD_COLOR);
+
+	if (image.empty()) {
+    	cout << "Error: Unable to read image '" << argv[1] << "'" << endl;
+    	return 1;
+   	}
 
 	namedWindow("Image", WINDOW_AUTOSIZE);
 	imshow("Image", image);
