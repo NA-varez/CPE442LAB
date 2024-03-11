@@ -15,11 +15,8 @@
 #include <stdio.h>
 #include <pthread.h>
 #include "sobel.hpp"
-#include "main.hpp"
 
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <cmath>
 
