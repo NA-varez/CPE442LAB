@@ -1,6 +1,6 @@
-  /*********************************************
+/*********************************************
 *
-* File: main.cpp
+* File: sobel.cpp
 *
 * Description: Lab 3 main for sobel filter
 *				creates an executable that takes
@@ -16,19 +16,16 @@
 *			 that was reducing quality of sobel output.
 **********************************************/
 #include <stdio.h>
-#include "sobel.hpp"
-#include "main.hpp"
-
-#include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <cmath>
+#include "sobel.hpp"
 
+#include <opencv2/opencv.hpp>
+//#include <opencv2/highgui/highgui.hpp>
+//#include <opencv2/imgproc/imgproc.hpp>
 
 using namespace cv;
 using namespace std;
-
 
 /*********************************************
 * Function: to442_grayscale
@@ -52,8 +49,8 @@ void to442_grayscale(Mat& input, Mat& output) {
     }
 	
 	//For each pixel in Mat
-	for (int i = 0; i < input.rows - 1; ++i) {
-		for (int j = 0; j < input.cols - 1; ++j) {
+	for (int i = 0; i < input.rows; ++i) {
+		for (int j = 0; j < input.cols; ++j) {
 			Vec3b pixel = input.at<Vec3b>(i, j);
 
 			//Red = pixel[2];
