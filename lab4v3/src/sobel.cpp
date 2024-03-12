@@ -86,7 +86,7 @@ void* threadSobel(void* inputThreadArgs) {
 		// At this point, the section of the frame alotted for this thread is now grayscale
 		// Next is to pass the grayscale through the sobel filter
 		for (int i = start; i < end; ++i) {
-			for (int j = 1; j < outputFrame->cols; ++j) {
+			for (int j = 1; j < outputFrame->cols - 1; ++j) {
 
 				//X and Y filter operations on surrounding intensity pixels
 				//Had to upgrade the variable type from uchar to int to prevent overflow
@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
 		// Stop processing if 'x' key is pressed within 10 ms
 		// of the last sobel frame is shown
 		// Break the loop end if no more frames to grab
-        if (waitKey(80) == 'x' || inputFrame.empty()) {
+        if (waitKey(100) == 'x' || inputFrame.empty()) {
 			//threadSplitArgs.stop = 1;
 			//pthread_barrier_wait(&barrierStart);
 			break;
