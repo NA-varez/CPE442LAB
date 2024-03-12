@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -I$(IDIR) $(shell pkg-config --cflags opencv4)
+CFLAGS = -g -I$(IDIR) $(shell pkg-config --cflags opencv4)
 LIBS = $(shell pkg-config --libs opencv4) -lpthread
 
 ODIR = obj
@@ -13,7 +13,7 @@ _OBJ = sobel.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -g -c -o $@ $< $(CFLAGS)
 
 sobel: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
