@@ -170,7 +170,7 @@ int main(int argc, char** argv) {
 		// Stop processing if 'x' key is pressed within 10 ms
 		// of the last sobel frame is shown
 		// Break the loop end if no more frames to grab
-        if (waitKey(50) == 'x' || inputFrame.empty()) {
+        if (waitKey(80) == 'x' || inputFrame.empty()) {
 			//threadSplitArgs.stop = 1;
 			//pthread_barrier_wait(&barrierStart);
 			break;
@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
 
 		// Read next frame from the video
 		cap.read(inputFrame);
-		//printf("Read\n");
+		printf("Read\n");
 		
 		thread1Args.input = &inputFrame;
 		thread1Args.grayScale = &grayScaleFrame;
@@ -212,26 +212,26 @@ int main(int argc, char** argv) {
 
 		// Wait for grayScale to finish
 		pthread_barrier_wait(&barrierGrayScale);
-		//printf("G\n");
+		printf("G\n");
 
 		// Wait for sobel to finish
 		pthread_barrier_wait(&barrierSobel);
-		//printf("S\n");
+		printf("S\n");
 		
 		//Pad top and bottom border pixels as zero
-		for(int i = 0; i <= inputFrame.cols; ++i) {
+		for(int i = 0; i <= num_cols; ++i) {
 			//First row
 			outputFrame.at<uchar>(0, i) = 0;
 			//Last row
-			outputFrame.at<uchar>(inputFrame.rows - 1, i) = 0;
+			outputFrame.at<uchar>(num_rows - 1, i) = 0;
 		}
 
 		//Pad left and right border pixels as zero
-		for(int j = 0; j <= inputFrame.rows; ++j) {
+		for(int j = 0; j <= num_rows; ++j) {
 			//First column
 			outputFrame.at<uchar>(j, 0) = 0;
 			//Last column
-			outputFrame.at<uchar>(j, inputFrame.cols - 1) = 0;
+			outputFrame.at<uchar>(j, num_cols - 1) = 0;
 		}
 
 		// Display Sobel frame
@@ -241,7 +241,7 @@ int main(int argc, char** argv) {
 		for (int i = 0; i < 4; ++i) {
         	pthread_join(sobelThread[i], NULL);
     	}
-		//printf("Joined\n");
+		printf("Joined\n");
     }
 
 	// Calculate elapsed time
