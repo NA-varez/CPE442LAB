@@ -38,7 +38,7 @@ struct threadArgs {
 	int end;
 };
 
-pthread_barrier_t barrierSobel, barrierGrayScale, barrierJoined;
+pthread_barrier_t barrierSobel, barrierGrayScale;//, barrierJoined;
 
 /************************************************************************/
 
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
 	// Initialize pthread number of barriers before threads can continue
 	pthread_barrier_init(&barrierGrayScale, NULL, 5);
 	pthread_barrier_init(&barrierSobel, NULL, 5);
-	pthread_barrier_init(&barrierJoined, NULL, 1);
+	//pthread_barrier_init(&barrierJoined, NULL, 1);
 
 	/**********************Creating Mats and Setting pThread Attributes******************************************/
 
@@ -243,7 +243,7 @@ int main(int argc, char** argv) {
         	pthread_join(sobelThread[i], NULL);
     	}
 
-		pthread_barrier_wait(&barrierJoined);
+		//pthread_barrier_wait(&barrierJoined);
 		printf("Joined\n");
     }
 
@@ -257,7 +257,7 @@ int main(int argc, char** argv) {
 
 	pthread_barrier_destroy(&barrierGrayScale);
 	pthread_barrier_destroy(&barrierSobel);
-	pthread_barrier_destroy(&barrierJoined);
+	//pthread_barrier_destroy(&barrierJoined);
 
     return 0;
 }
