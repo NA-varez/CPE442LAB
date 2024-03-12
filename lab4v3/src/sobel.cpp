@@ -219,7 +219,7 @@ int main(int argc, char** argv) {
 		printf("S\n");
 		
 		//Pad top and bottom border pixels as zero
-		for(int i = 0; i <= num_cols; ++i) {
+		for(int i = 0; i < num_cols; ++i) {
 			//First row
 			outputFrame.at<uchar>(0, i) = 0;
 			//Last row
@@ -227,7 +227,7 @@ int main(int argc, char** argv) {
 		}
 
 		//Pad left and right border pixels as zero
-		for(int j = 0; j <= num_rows; ++j) {
+		for(int j = 0; j < num_rows; ++j) {
 			//First column
 			outputFrame.at<uchar>(j, 0) = 0;
 			//Last column
