@@ -51,7 +51,7 @@ pthread_barrier_t barrierSobel, barrierGrayScale;//, barrierJoined;
 * Input: Input arbitrary mat frame size 
 * Output: Output sobel mat frame reference
 *
-*************************************************************************/
+*********************************************************************************/
 void* threadSobel(void* inputThreadArgs) {
 
 		struct threadArgs *sobelStruct = (struct threadArgs*)inputThreadArgs;
@@ -62,7 +62,6 @@ void* threadSobel(void* inputThreadArgs) {
 		Mat* outputFrame = (sobelStruct->output);
 		int start = (sobelStruct->start);
 		int end = (sobelStruct->end);
-
 
 
 		for (int i = start; i < end; ++i) {					//ROWS
@@ -82,6 +81,14 @@ void* threadSobel(void* inputThreadArgs) {
 
 		// Wait for threads to complete the grayScaleFrame
 		pthread_barrier_wait(&barrierGrayScale);
+
+		// int last_row = 0;
+
+		// if(end == inputFrame->rows) {
+		// 	last_row = end - 1;
+		// } else {
+		// 	last_row = end;
+		// }
 
 		// At this point, the section of the frame alotted for this thread is now grayscale
 		// Next is to pass the grayscale through the sobel filter
@@ -139,7 +146,7 @@ int main(int argc, char** argv) {
 	pthread_barrier_init(&barrierSobel, NULL, 5);
 	//pthread_barrier_init(&barrierJoined, NULL, 1);
 
-	/**********************Creating Mats and Setting pThread Attributes******************************************/
+	/**********************Creating Mats and Setting pThread Attributes****************************/
 
 	// Create input, grayscale, and output sobel mats
     Mat inputFrame, grayScaleFrame, outputFrame;
@@ -184,26 +191,26 @@ int main(int argc, char** argv) {
 		thread1Args.input = &inputFrame;
 		thread1Args.grayScale = &grayScaleFrame;
 		thread1Args.output = &outputFrame;
-		thread1Args.start = 0;
+		thread1Args.start = 1;
 		thread1Args.end = thread_rows;
 
 		thread2Args.input = &inputFrame;
 		thread2Args.grayScale = &grayScaleFrame;
 		thread2Args.output = &outputFrame;
 		thread2Args.start = thread_rows;
-		thread2Args.end = thread_rows * 2;
+		thread2Args.end = thread_rows + thread_rows;
 
 		thread3Args.input = &inputFrame;
 		thread3Args.grayScale = &grayScaleFrame;
 		thread3Args.output = &outputFrame;
-		thread3Args.start = (thread_rows * 2);
-		thread3Args.end = thread_rows * 3;
+		thread3Args.start = thread_rows + thread_rows;
+		thread3Args.end = thread_rows + thread_rows + thread_rows;
 
 		thread4Args.input = &inputFrame;
 		thread4Args.grayScale = &grayScaleFrame;
 		thread4Args.output = &outputFrame;
-		thread4Args.start = (thread_rows * 3);
-		thread4Args.end = num_rows;
+		thread4Args.start = thread_rows + thread_rows + thread_rows;
+		thread4Args.end = num_rows - 1;
 
 		// 4 threads for 4 horizontal sections of the frame
 		pthread_create(&sobelThread[0], NULL, threadSobel, (void *)&thread1Args);
