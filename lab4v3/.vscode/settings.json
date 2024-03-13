@@ -5,7 +5,8 @@
         "*.tcc": "cpp",
         "ostream": "cpp",
         "initializer_list": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "thread": "cpp"
     },
     "cmake.configureOnOpen": false
 }

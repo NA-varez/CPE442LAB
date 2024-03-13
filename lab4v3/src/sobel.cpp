@@ -26,8 +26,12 @@ using namespace std;
 /*********************************************************************/
 
 void* threadSobel(void* inputThreadArgs);
+void* thread1Status = NULL;
+void* thread2Status = NULL;
+void* thread3Status = NULL;
+void* thread4Status = NULL;
 
-pthread_t sobelThread[3];
+pthread_t sobelThread[4];
 
 
 struct threadArgs {
@@ -81,14 +85,6 @@ void* threadSobel(void* inputThreadArgs) {
 
 		// Wait for threads to complete the grayScaleFrame
 		pthread_barrier_wait(&barrierGrayScale);
-
-		// int last_row = 0;
-
-		// if(end == inputFrame->rows) {
-		// 	last_row = end - 1;
-		// } else {
-		// 	last_row = end;
-		// }
 
 		// At this point, the section of the frame alotted for this thread is now grayscale
 		// Next is to pass the grayscale through the sobel filter
@@ -186,7 +182,7 @@ int main(int argc, char** argv) {
 
 		// Read next frame from the video
 		cap.read(inputFrame);
-		printf("Read\n");
+		//printf("Read\n");
 		
 		thread1Args.input = &inputFrame;
 		thread1Args.grayScale = &grayScaleFrame;
@@ -213,18 +209,18 @@ int main(int argc, char** argv) {
 		thread4Args.end = num_rows - 1;
 
 		// 4 threads for 4 horizontal sections of the frame
-		pthread_create(&sobelThread[0], NULL, threadSobel, (void *)&thread1Args);
-		pthread_create(&sobelThread[1], NULL, threadSobel, (void *)&thread2Args);
-		pthread_create(&sobelThread[2], NULL, threadSobel, (void *)&thread3Args);
-		pthread_create(&sobelThread[3], NULL, threadSobel, (void *)&thread4Args);
+		int retVal1 = pthread_create(&sobelThread[0], NULL, threadSobel, (void *)&thread1Args);
+		int retVal2 = pthread_create(&sobelThread[1], NULL, threadSobel, (void *)&thread2Args);
+		int retVal3 = pthread_create(&sobelThread[2], NULL, threadSobel, (void *)&thread3Args);
+		int retVal4 = pthread_create(&sobelThread[3], NULL, threadSobel, (void *)&thread4Args);
 
 		// Wait for grayScale to finish
 		pthread_barrier_wait(&barrierGrayScale);
-		printf("G\n");
+		//printf("G\n");
 
 		// Wait for sobel to finish
 		pthread_barrier_wait(&barrierSobel);
-		printf("S\n");
+		//printf("S\n");
 		
 		//Pad top and bottom border pixels as zero
 		for(int i = 0; i < num_cols; ++i) {
@@ -246,12 +242,13 @@ int main(int argc, char** argv) {
 		imshow("Lab 4 Sobel Frame", outputFrame);
 
 		// Join threads
-		for (int i = 0; i < 4; ++i) {
-        	pthread_join(sobelThread[i], NULL);
-    	}
+		int retJoinVal1 = pthread_join(sobelThread[0], &thread1Status);
+		int retJoinVal2 = pthread_join(sobelThread[1], &thread2Status);
+		int retJoinVal3 = pthread_join(sobelThread[2], &thread3Status);
+		int retJoinVal4 = pthread_join(sobelThread[3], &thread4Status);
 
 		//pthread_barrier_wait(&barrierJoined);
-		printf("Joined\n");
+		//printf("Joined\n");
     }
 
 	// Calculate elapsed time
