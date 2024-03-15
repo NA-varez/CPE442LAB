@@ -174,7 +174,7 @@ int main(int argc, char** argv) {
 		// Stop processing if 'x' key is pressed within 10 ms
 		// of the last sobel frame is shown
 		// Break the loop end if no more frames to grab
-        if (waitKey(100) == 'x' || inputFrame.empty()) {
+        if (waitKey(20) == 'x' || inputFrame.empty()) {
 			//threadSplitArgs.stop = 1;
 			//pthread_barrier_wait(&barrierStart);
 			break;
