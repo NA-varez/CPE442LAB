@@ -209,10 +209,10 @@ int main(int argc, char** argv) {
 		thread4Args.end = num_rows - 1;
 
 		// 4 threads for 4 horizontal sections of the frame
-		int retVal1 = pthread_create(&sobelThread[0], NULL, threadSobel, (void *)&thread1Args);
-		int retVal2 = pthread_create(&sobelThread[1], NULL, threadSobel, (void *)&thread2Args);
-		int retVal3 = pthread_create(&sobelThread[2], NULL, threadSobel, (void *)&thread3Args);
-		int retVal4 = pthread_create(&sobelThread[3], NULL, threadSobel, (void *)&thread4Args);
+		pthread_create(&sobelThread[0], NULL, threadSobel, (void *)&thread1Args);
+		pthread_create(&sobelThread[1], NULL, threadSobel, (void *)&thread2Args);
+		pthread_create(&sobelThread[2], NULL, threadSobel, (void *)&thread3Args);
+		pthread_create(&sobelThread[3], NULL, threadSobel, (void *)&thread4Args);
 
 		// Wait for grayScale to finish
 		pthread_barrier_wait(&barrierGrayScale);
