@@ -169,6 +169,35 @@ int main(int argc, char** argv) {
 	cap.set(CAP_PROP_POS_FRAMES, 0);
 	double start_time = (double)cv::getTickCount();
 
+	thread1Args.input = &inputFrame;
+	thread1Args.grayScale = &grayScaleFrame;
+	thread1Args.output = &outputFrame;
+
+	thread2Args.input = &inputFrame;
+	thread2Args.grayScale = &grayScaleFrame;
+	thread2Args.output = &outputFrame;
+
+	thread3Args.input = &inputFrame;
+	thread3Args.grayScale = &grayScaleFrame;
+	thread3Args.output = &outputFrame;
+
+	thread4Args.input = &inputFrame;
+	thread4Args.grayScale = &grayScaleFrame;
+	thread4Args.output = &outputFrame;
+
+
+	thread1Args.start = 1;
+	thread1Args.end = thread_rows;
+
+	thread2Args.start = thread_rows;
+	thread2Args.end = thread_rows + thread_rows;
+
+	thread3Args.start = thread_rows + thread_rows;
+	thread3Args.end = thread_rows + thread_rows + thread_rows;
+
+	thread4Args.start = thread_rows + thread_rows + thread_rows;
+	thread4Args.end = num_rows - 1;
+
     while (true) {
 		
 		// Stop processing if 'x' key is pressed within 10 ms
@@ -183,31 +212,8 @@ int main(int argc, char** argv) {
 		// Read next frame from the video
 		cap.read(inputFrame);
 		//printf("Read\n");
-		
-		thread1Args.input = &inputFrame;
-		thread1Args.grayScale = &grayScaleFrame;
-		thread1Args.output = &outputFrame;
-		thread1Args.start = 1;
-		thread1Args.end = thread_rows;
-
-		thread2Args.input = &inputFrame;
-		thread2Args.grayScale = &grayScaleFrame;
-		thread2Args.output = &outputFrame;
-		thread2Args.start = thread_rows;
-		thread2Args.end = thread_rows + thread_rows;
-
-		thread3Args.input = &inputFrame;
-		thread3Args.grayScale = &grayScaleFrame;
-		thread3Args.output = &outputFrame;
-		thread3Args.start = thread_rows + thread_rows;
-		thread3Args.end = thread_rows + thread_rows + thread_rows;
-
-		thread4Args.input = &inputFrame;
-		thread4Args.grayScale = &grayScaleFrame;
-		thread4Args.output = &outputFrame;
-		thread4Args.start = thread_rows + thread_rows + thread_rows;
-		thread4Args.end = num_rows - 1;
-
+	
+	
 		// 4 threads for 4 horizontal sections of the frame
 		pthread_create(&sobelThread[0], NULL, threadSobel, (void *)&thread1Args);
 		pthread_create(&sobelThread[1], NULL, threadSobel, (void *)&thread2Args);
