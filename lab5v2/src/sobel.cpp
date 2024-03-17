@@ -1,5 +1,5 @@
 /*********************************************************************
-* File: main.cpp
+* File: sobel.cpp
 *
 * Description: Lab 5 uses intrinsics to complete vector operations
 *			   to optimize grayscale and sobel operations
@@ -10,15 +10,13 @@
 **********************************************************************/
 
 #include <stdio.h>
-#include <pthread.h>
 #include "sobel.hpp"
-#include "main.hpp"
 
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <cmath>
+
+#include <pthread.h>
 #include <arm_neon.h>
 
 using namespace cv;
@@ -27,8 +25,12 @@ using namespace std;
 /*********************************************************************/
 
 void* threadSobel(void* inputThreadArgs);
+void* thread1Status = NULL;
+void* thread2Status = NULL;
+void* thread3Status = NULL;
+void* thread4Status = NULL;
 
-pthread_t sobelThread[3];
+pthread_t sobelThread[4];
 
 
 struct threadArgs {
@@ -90,7 +92,8 @@ void* threadSobel(void* inputThreadArgs) {
 			grayscale_pointer = grayScaleFrame->ptr(i);
 
 			//printf("Pointers created");
-
+			printf(((int)(inputFram->cols) / 8) * 8);
+			
 			// Operates up to the number cols that is divisible by 8
 			for (int j = 0; j < ((int)(inputFrame->cols) / 8) * 8; ++j) {	//COLS
 				// Load 16 bits, 8 of them, 3 packed vectors
@@ -118,21 +121,21 @@ void* threadSobel(void* inputThreadArgs) {
 				grayscale_pointer += 8; // moves to next empty position for 8 more grayscale pixels
 			}	
 
-			//printf("Start of remaining grayscale pixels");
+			printf("Start of remaining grayscale pixels");
 
-			// Computer remaining number of cols that was not divisible by 8 using traditional 
-			// for (int k = (inputFrame->cols - ((int)inputFrame->cols % 8)); k < inputFrame->cols; ++k) {
-			// 	Vec3b pixel = inputFrame->at<Vec3b>(i, k);
+			Computer remaining number of cols that was not divisible by 8 using traditional 
+			for (int k = (inputFrame->cols - ((int)inputFrame->cols % 8)); k < inputFrame->cols; ++k) {
+				Vec3b pixel = inputFrame->at<Vec3b>(i, k);
 
-			// 	//Red = pixel[2];
-			// 	//Green = pixel[1];
-			// 	//Blue = pixel[0];
+				//Red = pixel[2];
+				//Green = pixel[1];
+				//Blue = pixel[0];
 
-			// 	//ITU-R (BT.709) recommended algorithm for grayscale
-			// 	uchar grayPixel = (0.2126 * pixel[2] + 0.7152 * pixel[1] + 0.0722 * pixel[0]);
-			// 	//All pixels now represent 1 'intensity' value that will be used in the sobel
-			// 	grayScaleFrame->at<uchar>(i, k) = grayPixel;
-			// }
+				//ITU-R (BT.709) recommended algorithm for grayscale
+				uchar grayPixel = (0.2126 * pixel[2] + 0.7152 * pixel[1] + 0.0722 * pixel[0]);
+				//All pixels now represent 1 'intensity' value that will be used in the sobel
+				grayScaleFrame->at<uchar>(i, k) = grayPixel;
+			}
 		}
 		
 		printf("Grayscale barrier");
@@ -163,7 +166,7 @@ void* threadSobel(void* inputThreadArgs) {
 			// uint16_t* row_below = grayScaleFrame->ptr<uint8_t>(row + 1);
 
 
-			for (int j = 1; j < outputFrame->cols; ++j) {
+			for (int j = 1; j < outputFrame->cols - 1; ++j) {
 
 				//X and Y filter operations on surrounding intensity pixels
 				//Had to upgrade the variable type from uchar to int to prevent overflow
@@ -242,6 +245,35 @@ int main(int argc, char** argv) {
 	cap.set(CAP_PROP_POS_FRAMES, 0);
 	double start_time = (double)cv::getTickCount();
 
+	thread1Args.input = &inputFrame;
+	thread1Args.grayScale = &grayScaleFrame;
+	thread1Args.output = &outputFrame;
+
+	thread2Args.input = &inputFrame;
+	thread2Args.grayScale = &grayScaleFrame;
+	thread2Args.output = &outputFrame;
+
+	thread3Args.input = &inputFrame;
+	thread3Args.grayScale = &grayScaleFrame;
+	thread3Args.output = &outputFrame;
+
+	thread4Args.input = &inputFrame;
+	thread4Args.grayScale = &grayScaleFrame;
+	thread4Args.output = &outputFrame;
+
+
+	thread1Args.start = 1;
+	thread1Args.end = thread_rows;
+
+	thread2Args.start = thread_rows;
+	thread2Args.end = thread_rows + thread_rows;
+
+	thread3Args.start = thread_rows + thread_rows;
+	thread3Args.end = thread_rows + thread_rows + thread_rows;
+
+	thread4Args.start = thread_rows + thread_rows + thread_rows;
+	thread4Args.end = num_rows - 1;
+
     while (true) {
 		
 		// Stop processing if 'x' key is pressed within 10 ms
@@ -257,29 +289,6 @@ int main(int argc, char** argv) {
 		cap.read(inputFrame);
 		//printf("Read\n");
 		
-		thread1Args.input = &inputFrame;
-		thread1Args.grayScale = &grayScaleFrame;
-		thread1Args.output = &outputFrame;
-		thread1Args.start = 0;
-		thread1Args.end = thread_rows;
-
-		thread2Args.input = &inputFrame;
-		thread2Args.grayScale = &grayScaleFrame;
-		thread2Args.output = &outputFrame;
-		thread2Args.start = thread_rows;
-		thread2Args.end = thread_rows * 2;
-
-		thread3Args.input = &inputFrame;
-		thread3Args.grayScale = &grayScaleFrame;
-		thread3Args.output = &outputFrame;
-		thread3Args.start = (thread_rows * 2);
-		thread3Args.end = thread_rows * 3;
-
-		thread4Args.input = &inputFrame;
-		thread4Args.grayScale = &grayScaleFrame;
-		thread4Args.output = &outputFrame;
-		thread4Args.start = (thread_rows * 3);
-		thread4Args.end = num_rows;
 
 		// 4 threads for 4 horizontal sections of the frame
 		pthread_create(&sobelThread[0], NULL, threadSobel, (void *)&thread1Args);
@@ -296,28 +305,30 @@ int main(int argc, char** argv) {
 		//printf("S\n");
 		
 		//Pad top and bottom border pixels as zero
-		for(int i = 0; i <= inputFrame.cols; ++i) {
+		for(int i = 0; i < num_cols; ++i) {
 			//First row
 			outputFrame.at<uchar>(0, i) = 0;
 			//Last row
-			outputFrame.at<uchar>(inputFrame.rows - 1, i) = 0;
+			outputFrame.at<uchar>(num_rows - 1, i) = 0;
 		}
 
 		//Pad left and right border pixels as zero
-		for(int j = 0; j <= inputFrame.rows; ++j) {
+		for(int j = 0; j < num_rows; ++j) {
 			//First column
 			outputFrame.at<uchar>(j, 0) = 0;
 			//Last column
-			outputFrame.at<uchar>(j, inputFrame.cols - 1) = 0;
+			outputFrame.at<uchar>(j, num_cols - 1) = 0;
 		}
 
 		// Display Sobel frame
 		imshow("Lab 4 Sobel Frame", outputFrame);
 
 		// Join threads
-		for (int i = 0; i < 4; ++i) {
-        	pthread_join(sobelThread[i], NULL);
-    	}
+		int retJoinVal1 = pthread_join(sobelThread[0], &thread1Status);
+		int retJoinVal2 = pthread_join(sobelThread[1], &thread2Status);
+		int retJoinVal3 = pthread_join(sobelThread[2], &thread3Status);
+		int retJoinVal4 = pthread_join(sobelThread[3], &thread4Status);
+
 		//printf("Joined\n");
     }
 

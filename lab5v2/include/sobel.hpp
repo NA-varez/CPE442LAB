@@ -1,6 +1,6 @@
 /*********************************************
 *
-* File: main.hpp
+* File: sobel.hpp
 *
 * Description: Practice header file
 *
