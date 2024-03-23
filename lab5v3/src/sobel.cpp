@@ -2,7 +2,7 @@
 * File: main.cpp
 *
 * Description: Lab 5 uses intrinsics to complete vector operations
-*			   to optimize grayscale and sobel operations
+*			   to optimize sobel operations
 *
 * Author: Nicolas Alvarez
 *
@@ -18,7 +18,7 @@
 #include <pthread.h>
 #include <arm_neon.h>
 
-#define FIXED_POINT_BITS 8
+#define FIXED_POINT_BITS 7
 #define FIXED_POINT_SCALE (1 << FIXED_POINT_BITS)
 
 using namespace cv;
@@ -107,79 +107,44 @@ void* threadSobel(void* inputThreadArgs) {
 			
 			sobel_frame_ptr = outputFrame->ptr(i);
 
+				for (int col = 0; col < (inputFrame->cols - (inputFrame->cols % 8)); col+=6) {
+					
+					// Load grayscale values and reinterpret them as signed integers before operations
+					int16x8_t top = vreinterpretq_s16_u16(vld1q_u16((const uint16_t*)first_row));
+					int16x8_t mid = vreinterpretq_s16_u16(vld1q_u16((const uint16_t*)second_row));
+					int16x8_t bot = vreinterpretq_s16_u16(vld1q_u16((const uint16_t*)third_row));
+					
+					// Shift grayscale values to the appropriate precision to scale for fixed-point format
+					top = vshlq_n_s16(top, FIXED_POINT_BITS);
+					mid = vshlq_n_s16(mid, FIXED_POINT_BITS);
+					bot = vshlq_n_s16(bot, FIXED_POINT_BITS);
 
-			for (int col = 0; col < (inputFrame->cols - (inputFrame->cols % 8)); col+=6) {
-		
-				// Get 3, 8 element vectors loaded with 16-bit types of the next 3 rows
-				uint16x8_t utop = vld1q_u16((const uint16_t*)first_row);
-				uint16x8_t umid = vld1q_u16((const uint16_t*)second_row);
-				uint16x8_t ubot = vld1q_u16((const uint16_t*)third_row);
+					// Sobel computation for X direction
+					int16x8_t g_x = vaddq_s16(vaddq_s16(vaddq_s16(vmulq_n_s16(top, -1), vmulq_n_s16(mid, -2)),
+														vaddq_s16(vmulq_n_s16(bot, -1), vmulq_n_s16(top, 1))), 
+											  vaddq_s16(vmulq_n_s16(mid, 2), vmulq_n_s16(bot, 1)));
+					
+					// Sobel computation for Y direction
+					int16x8_t g_y = vaddq_s16(vaddq_s16(vaddq_s16(vmulq_n_s16(top, 1), vmulq_n_s16(bot, -1)),
+														vaddq_s16(vmulq_n_s16(top, 2), vmulq_n_s16(bot, -2))),
+											  vaddq_s16(vmulq_n_s16(top, 1), vmulq_n_s16(bot, -1)));
+
+					// Combine gradients
+					int16x8_t final_sum = vaddq_s16(vabsq_s16(g_x), vabsq_s16(g_y));
+
+					// Convert back to integer format and scale to original range
+					uint16x8_t sobel_pixels = vreinterpretq_u16_s16(vshrq_n_s16(final_sum, FIXED_POINT_BITS));
+
+					// Vector store 
+					vst1q_u16((uint16_t*)sobel_frame_ptr, sobel_pixels);
+
+					// Increment pointers for next 6 pixels
+					sobel_frame_ptr += 6;
+					first_row += 6;
+					second_row += 6;
+					third_row += 6;
+				}
 				
-				// Reinterpret vectors as signed before vector multiplies
-				int16x8_t top = vreinterpretq_s16_u16(utop);
-				int16x8_t mid = vreinterpretq_s16_u16(umid);
-				int16x8_t bot = vreinterpretq_s16_u16(ubot);
-				
-				int16x8_t x_top_left = vmulq_n_s16(top, -1);
-				//int16x8_t x_top_mid = vmulq_n_s16(top, 0);
-				int16x8_t x_top_right = vmulq_n_s16(top, 1);
-				
-				int16x8_t x_mid_left = vmulq_n_s16(mid, -2);
-				//int16x8_t x_mid_mid = vmulq_n_s16(mid, 0);
-				int16x8_t x_mid_right = vmulq_n_s16(mid, 2);
-				
-				int16x8_t x_bot_left = vmulq_n_s16(bot, -1);
-				//int16x8_t x_bot_mid = vmulq_n_s16(bot, 0);
-				int16x8_t x_bot_right = vmulq_n_s16(bot, 1);
-				
-				
-				// Add all G_x vectors
-				int16x8_t g_x = vaddq_s16(vaddq_s16(vaddq_s16(x_top_left, x_top_right), 
-				vaddq_s16(x_mid_left, x_mid_right)), 
-				vaddq_s16(x_bot_left, x_bot_right));
-				
-				// Absolute value of G_x sum
-				int16x8_t g_x_abs = vabsq_s16(g_x);
-				
-				int16x8_t y_top_left = vmulq_n_s16(top, 1);
-				int16x8_t y_top_mid = vmulq_n_s16(top, 2);
-				int16x8_t y_top_right = vmulq_n_s16(top, 1);
-				
-				//int16x8_t y_mid_left = vmulq_n_s16(mid, 0);
-				//int16x8_t y_mid_mid = vmulq_n_s16(mid, 0);
-				//int16x8_t y_mid_right = vmulq_n_s16(mid, 0);
-				
-				int16x8_t y_bot_left = vmulq_n_s16(bot, -1);
-				int16x8_t y_bot_mid = vmulq_n_s16(bot, -2);
-				int16x8_t y_bot_right = vmulq_n_s16(bot, -1);
-				
-				// Add all G_x vectors
-				int16x8_t g_y = vaddq_s16(vaddq_s16(vaddq_s16(y_top_left, y_top_right), 
-				vaddq_s16(y_top_mid, y_bot_mid)), 
-				vaddq_s16(y_bot_left, y_bot_right));
-				
-				// Absolute value of G_y sum
-				int16x8_t g_y_abs = vabsq_s16(g_y);
-				
-				// Add G_x and G_y sums
-				int16x8_t final_sum = vaddq_s16(g_x_abs, g_y_abs);
-				
-				// Reinterpret as unsigned
-				uint16x8_t sobel_pixels = vreinterpretq_u16_s16(final_sum);
-				
-				// Vector store 
-				vst1q_u16((uint16_t*)sobel_frame_ptr, sobel_pixels);
-				
-				// Increment pointer for next 6 pixels pixels
-				// Loop will move to next row if not enough pixels for a full vector 
-				sobel_frame_ptr += 6;
-				
-				first_row += 6;
-				second_row += 6;
-				third_row += 6;
-			}
-		
-		
 		
 		/**************************Remaining Sobel Computations**************************/
 
