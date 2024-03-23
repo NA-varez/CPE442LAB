@@ -37,16 +37,16 @@ ________________
 
 Results from lab5v3:
 
- seconds
- seconds
-seconds
-seconds
- seconds
+8.4138 seconds
+8.9755 seconds
+8.3846 seconds
+8.1284 seconds
+8.2969 seconds
 ________________
- seconds average
+8.3498 seconds average
 
 
-Average speedup = old time / new time = 
+Average speedup = old time / new time = 1.4378 !
 
 
 
