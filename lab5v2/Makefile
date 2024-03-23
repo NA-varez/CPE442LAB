@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS =-Werror -mfpu=neon -std=c++11 -g -O0 -I$(IDIR) $(shell pkg-config --cflags opencv4)
+CFLAGS =-Wall -ggdb3 -mfpu=neon -std=c++11 -g -O0 -I$(IDIR) $(shell pkg-config --cflags opencv4)
 LIBS = $(shell pkg-config --libs opencv4) -lpthread
 
 ODIR = obj

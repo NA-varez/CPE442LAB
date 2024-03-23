@@ -1,3 +1,0 @@
-/home/na/CPE442LAB/lab5v2/CMakeFiles/main.dir
-/home/na/CPE442LAB/lab5v2/CMakeFiles/edit_cache.dir
-/home/na/CPE442LAB/lab5v2/CMakeFiles/rebuild_cache.dir
