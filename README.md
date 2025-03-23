@@ -1,26 +1,35 @@
-Readme!!!
+# README!!!
+
+
+<details>
+<summary>LAB 1</summary>
+<br>
+
+## Hi
+
+```c
+
+```
+
+Explanation here
+
+
+</details>
 
 
 
-#Lab 1
+<details>
+<summary>LAB 1</summary>
+<br>
+
+## Hi
+
+```c
+
+```
+
+Explanation here
 
 
-
-
-
-#Lab 2
-
-
-
-
-#Lab 3
-
-
-
-
-
-#Lab 4 and Beyond
-
-
-
+</details>
 
