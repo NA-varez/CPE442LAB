@@ -14,11 +14,9 @@ A Makefile is a way of ***automating*** the process of compiling code. There are
 2. If working in a team. Everyone can stay consistent with the same build process.
 3. Saves time by rebuilding only what is necessary.
 
-   
-
 
 ### What is an object file and why is it created for C/C++ files?
-
+An object file is what a C/C++ file 
 
 ### What is in the executable that is created?
 
