@@ -23,21 +23,53 @@ An object file is an intermediate compilation product that is not yet linked int
 This has all of the machine code from all object files, linked together. At this point, all of the functions have their real addresses, program entry point, and any static data is defined and ready to go.
 
 ## O.K. Here is the Code
-```c
-CC = g++
+```make
+CC = g++  # GCC Compiler
+
+# The CFLAGS variable is used a bit later in the object creation line
+# In short, tells the compiler to look into the 'include' directory for header files then,
+# pkg-config is asked for the needed compiler flags (additional directories) for OpenCV4
 CFLAGS = -I$(IDIR) $(shell pkg-config --cflags opencv4)
 LIBS = $(shell pkg-config --libs opencv4)
 
+# File directory names
 ODIR = obj
 IDIR = include
 SRCDIR = src
 ```
-The GCC compiler selected then,
-CFLAGS (used later) is set to the include directory
+'-I' = "add the following directory to the include search path"
+'$(___)' = expand the value of / compute whatever is inside the parenthesis
+'pkg-config' is a helper tool that provides information about installed libraries
 
+NOTE: '-I' only means something to the g++ compiler, not interpreted by Make
 
+```make
+# Adds path prefixes to each file name in _DEPS
+_DEPS = DisplayImage.hpp
+DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-Explanation here
+# Adds path prefix to each object file in _OBJ
+_OBJ = DisplayImage.o
+OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
+```
+'patsubst' substitues paths for each occurance of the pattern described by the first argument. 
+  Second argmument is the format for each substitution you want
+  Third argument is the text you are iterating over in the 'for each' loop
+
+```make
+# For all .o files in ODIR use all of the .cpp files from SRCDIR as input and consider the dependencies
+$(ODIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)  # Compiles
+
+DisplayImage: $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+
+.PHONY: clean
+
+clean:
+	rm -f $(ODIR)/*.o
+```
+
 
 
 </details>
