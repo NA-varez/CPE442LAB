@@ -3,10 +3,8 @@ Check out the dropdowns for each lab!
 Explains some neat things.
 
 <details>
-<summary>LAB 1</summary>
+<summary><h2>PART 1 - Makefile and Compiling with GCC</h2></summary>
 <br>
-
-## Makefile and Compiling with GCC
 
 ### What is the point of a Makefile?
 A Makefile is a way of ***automating*** the process of compiling code. There are 3 advantages to a Makefile that are at the core of its use:
