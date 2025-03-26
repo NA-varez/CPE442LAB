@@ -57,7 +57,7 @@ OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 ```make
 # For all .o files in ODIR use all of the .cpp files from SRCDIR as input and consider the dependencies
 $(ODIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)  # Compiles
+	$(CC) -c -o $@ $< $(CFLAGS)  # Compile command
 
 DisplayImage: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
@@ -67,6 +67,9 @@ DisplayImage: $(OBJ)
 clean:
 	rm -f $(ODIR)/*.o
 ```
+The format for a rule is:
+Target (the file you want to create): Prerequisites (files needed to create target)
+	Commands (actions to execute to create target)
 
 
 
