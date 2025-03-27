@@ -59,18 +59,36 @@ OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 $(ODIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)  # Compile command
 
+# Target is the executable 'DisplayImage'
+# OBJ is the list of object files required
+# -o $@ sets the output to the target name
+# CFLAGS are all the compilation flags
+# LIBS are all of the library flags for linking
 DisplayImage: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
+# Removes the possibility that Make sees a file named 'clean' and when
+# You run 'make clean' it assumes the target file is already satisfied
 .PHONY: clean
 
+# Command for force removing all files in the output directory with the file extension .o
 clean:
 	rm -f $(ODIR)/*.o
 ```
+
+
 The format for a rule is:
 Target (the file you want to create): Prerequisites (files needed to create target)
 	Commands (actions to execute to create target)
 
+
+## The CODE code
+
+The actual CODE code of this first part is pretty self explanatory. In the command line:
+
+./DisplayImage <imagehere.jpg>
+
+This'll just pop up a window displaying the image you specified as long as that image is in the project directory.
 
 
 </details>
@@ -78,7 +96,7 @@ Target (the file you want to create): Prerequisites (files needed to create targ
 
 
 <details>
-<summary>LAB 1</summary>
+<summary><h2>PART 2 - </h2></summary>
 <br>
 
 ## Hi
