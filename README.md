@@ -5,6 +5,7 @@ Explains some neat things.
 <details>
 <summary><h2>PART 1 - Makefile and Compiling with GCC</h2></summary>
 <br>
+(Lab 2 folder)
 
 ### What is the point of a Makefile?
 A Makefile is a way of ***automating*** the process of compiling code. There are 3 advantages to a Makefile that are at the core of its use:
@@ -96,16 +97,27 @@ This'll just pop up a window displaying the image you specified as long as that 
 
 
 <details>
-<summary><h2>PART 2 - </h2></summary>
+<summary><h2>PART 2 - Sobel Filtered Video</h2></summary>
 <br>
 
-## Hi
+## OpenCV what?
+
+Open Source Computer Vision Library. Useful. Very helpful. Can use it to do operations on pixels!
+That is important for the Sobel Filter.
+
+## What is A Sobel Filter?
+
+A Sobel Filter makes the edges/features of an image white, and everything else black (ideally).
+Used for edge detection.
+
+## How does that Look in Code?
+
 
 ```c
 
 ```
 
-Explanation here
+
 
 
 </details>
