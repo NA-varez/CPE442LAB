@@ -108,9 +108,12 @@ That is important for the Sobel Filter.
 ## What is A Sobel Filter?
 
 A Sobel Filter makes the edges/features of an image white, and everything else black (ideally).
-Used for edge detection.
+Used for edge detection. The Sobel filter convolves an image's pixels with 2 (one horizontal and one vertical)
+kernels that create the approximate horizontal and vertical intensitiy deriviatve components of an image.
 
 ## How does that Look in Code?
+
+
 
 
 ```c
