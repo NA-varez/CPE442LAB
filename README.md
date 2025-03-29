@@ -85,9 +85,12 @@ Target (the file you want to create): Prerequisites (files needed to create targ
 
 ## The CODE code
 
-The actual CODE code of this first part is pretty self explanatory. In the command line:
+The actual CODE code of this first part is pretty self explanatory. Explanation not really needed.
 
+To run the code:
+```c
 ./DisplayImage <imagehere.jpg>
+```
 
 This'll just pop up a window displaying the image you specified as long as that image is in the project directory.
 
