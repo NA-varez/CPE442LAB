@@ -92,6 +92,7 @@ The actual CODE code of this first part is pretty self explanatory. In the comma
 This'll just pop up a window displaying the image you specified as long as that image is in the project directory.
 
 
+![part1](https://github.com/user-attachments/assets/87c57d82-d03d-41c3-b87e-f381add23e67)
 
 
 
