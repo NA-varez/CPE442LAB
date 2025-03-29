@@ -2,9 +2,9 @@
 Check out the dropdowns for each lab!
 Explains some neat things.
 
-<details>
-<summary><h2>PART 1 - Makefile and Compiling with GCC</h2></summary>
-<br>
+
+<h2>PART 1 - Makefile and Compiling with GCC</h2>
+
 (Lab 2 folder)
 
 ### What is the point of a Makefile?
@@ -92,13 +92,12 @@ The actual CODE code of this first part is pretty self explanatory. In the comma
 This'll just pop up a window displaying the image you specified as long as that image is in the project directory.
 
 
-</details>
 
 
 
-<details>
-<summary><h2>PART 2 - Sobel Filtered Video</h2></summary>
-<br>
+
+<h2>PART 2 - Sobel Filtered Video</h2>
+
 
 ## OpenCV what?
 
@@ -123,5 +122,4 @@ kernels that create the approximate horizontal and vertical intensitiy deriviatv
 
 
 
-</details>
 
