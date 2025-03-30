@@ -10,7 +10,10 @@
 *
 * Author: Nicolas Alvarez
 *
-* Version: 0.1
+* Version: 0.1		Date 12/10/2025
+* 	Details: Initial creation.
+* Version 0.2 		Date: 3/29/2025
+*	Details: Added functionality to make it possible for images to be sobel filtered along with video.
 *
 * Reference: Richard Rios: Helped fix uchar overflow in sobel function
 *			 that was reducing quality of sobel output.
@@ -98,93 +101,141 @@ void to442_sobel(Mat& input, Mat& output) {
 	}
 
 	//Pad top and bottom border pixels as zero
-	for(int i = 0; i < input.cols; ++i) {
+	for(int i = 0; i < output.cols; ++i) {
 		//First row
-		input.at<uchar>(0, i) = 0;
+		output.at<uchar>(0, i) = 0;
 		//Last row
-		input.at<uchar>(input.rows - 1, i) = 0;
+		output.at<uchar>(output.rows - 1, i) = 0;
 	}
 
 	//Pad left and right border pixels as zero
-	for(int j = 0; j < input.rows; ++j) {
+	for(int j = 0; j < output.rows; ++j) {
 		//First column
-		input.at<uchar>(j, 0) = 0;
+		output.at<uchar>(j, 0) = 0;
 		//Last column
-		input.at<uchar>(j, input.cols - 1) = 0;
+		output.at<uchar>(j, output.cols - 1) = 0;
 	}
 }
 
 
 int main(int argc, char** argv) {
     
+    
+	// 
+	bool isImage = false;
+	VideoCapture cap;
+	Mat inputImage, grayscale, sobel, inputFrame;
+    
+    
+    
 	// Checks whether the number of command-line 
 	// arguments is sufficient (Should be ./main <videofile>)
 	if (argc != 2) {
-        printf("Usage: %s <video_file>\n", argv[0]);
-        return -1;
-    }
+		printf("Usage: %s <video_file OR image_file>\n", argv[0]);
+		return -1;
+	}
 
-	// Open the video file using the 2nd command-line argument
-    VideoCapture cap(argv[1]);
+	// Parses argument string for file extension
+	string filename = argv[1];
+	string extension = filename.substr(filename.find_last_of(".") + 1);
+	
+	
+	// Check if argument has an image file extension
+	if(extension == "jpg" || extension == "jpeg" || extension == "png" || extension == "bmp" || extension == "webp") {
+		
+		// Try to load as image
+		inputImage = imread(filename, IMREAD_COLOR);
+		if(!inputImage.empty()) {
+			isImage = true;
+			cout << "File loaded as image: " << filename << endl;
+		} else {
+			cout << "Failed to load image file: " << filename << endl;
+		}
+		
+			
+	}
+	
+	
+	
+	// Display image code
+	if(isImage) {
+		inputFrame = inputImage.clone();
+		grayscale.create(inputFrame.size(), CV_8UC1);
+		sobel.create(inputFrame.size(), CV_8UC1);
+		
+		to442_grayscale(inputFrame, grayscale);
+		to442_sobel(grayscale, sobel);
+		
+		imshow("Original Image", inputFrame);
+		imshow("Grayscale Image", grayscale);
+		imshow("Sobel Image", sobel);
+		
+		cout << "Press any key to exit" << endl;
+		waitKey(0);
+		
+		
+		
+		
+	// Display video code
+	}else{
+		cap = VideoCapture(filename);
+		if(!cap.isOpened()) {
+			cout << "Failed to open file as video." << endl;
+		}
 
-	// Throws error if video does not open
-    if (!cap.isOpened()) {
-        printf("Error opening video\n");
-        return -1;
-    }
-
-	cout << "Video conversion has begun" 
-		 << "Press 'x' to terminate" << endl;
-
-	// Mat object for original frame,
-    Mat inputFrame;
-
-	// Read first frame from the video
-	cap.read(inputFrame);
-
-	// Create grayscale frame, and sobel frame with same size of input frame
-	Mat grayscale, sobel;
-	grayscale.create(inputFrame.size(), CV_8UC1);
-	sobel.create(inputFrame.size(), CV_8UC1);
-
-	// Set video capture at the first frame
-	cap.set(CAP_PROP_POS_FRAMES, 0);
-	double start_time = (double)cv::getTickCount();
-
-    while (true) {
-		// Read frame from the video
+		// Read first frame from the video
 		cap.read(inputFrame);
 
-        if (inputFrame.empty()) {
-			cout << "No more frames found" << endl;
-			break; // Break the loop end if no more frames to grab
-        }
 
-        // Convert to grayscale
-        to442_grayscale(inputFrame, grayscale);
+		// Create grayscale frame, and sobel frame with same size of input frame
+		Mat grayscale, sobel;
+		grayscale.create(inputFrame.size(), CV_8UC1);
+		sobel.create(inputFrame.size(), CV_8UC1);
 
-        //Apply Sobel filter
-        to442_sobel(grayscale, sobel);
+		// Set video capture at the first frame
+		cap.set(CAP_PROP_POS_FRAMES, 0);
+		int frame_count = (int)cap.get(CAP_PROP_FRAME_COUNT);
+		cout << "Total number of frames: " << frame_count << endl;
+		double start_time = (double)getTickCount();
+		
+		
+	    while (true) {
+		// Read frame from the video
+		bool success = cap.read(inputFrame);
 
-        // Display the result
-        //imshow("Lab 3 Sobel Frame", grayscale);
+		if (!success || inputFrame.empty()) {
+				cout << "No more frames found" << endl;
+				break; // Break the loop end if no more frames to grab
+		}
+		
+
+		// Convert to grayscale
+		to442_grayscale(inputFrame, grayscale);
+
+		//Apply Sobel filter
+		to442_sobel(grayscale, sobel);
+
+		// Display the result
+		//imshow("Lab 3 Sobel Frame", grayscale);
 		imshow("Lab 3 Sobel Frame", sobel);
 
-        // Stop processing if 'x' key is pressed within 10 ms
-		// of the last sobel frame is shown
-        if (waitKey(20) == 'x') {
-			cout << "Output stopped by user" << endl;
-            break;
-        }
-    }
+		// Stop processing if 'x' key is pressed within 20 ms
+			// of the last sobel frame is shown
+		if (waitKey(20) == 'x') {
+				cout << "Output stopped by user" << endl;
+		    break;
+		}
+	    }
 
-	// Calculate elapsed time
-    double end_time = (double)cv::getTickCount();
-    double elapsed_time = (end_time - start_time) / cv::getTickFrequency();
-    cout << "Total processing time: " << elapsed_time << " seconds" << endl;
-
+	    // Calculate elapsed time
+	    double end_time = (double)getTickCount();
+	    double elapsed_time = (end_time - start_time) / getTickFrequency();
+	    cout << "Total processing time: " << elapsed_time << " seconds" << endl;
+}
+    
     // Release the VideoCapture and close the window
     cap.release();
+    destroyAllWindows();
 
     return 0;
 }
