@@ -103,19 +103,40 @@ This'll just pop up a window displaying the image you specified as long as that 
 <h2>PART 2 - Sobel Filtered Video</h2>
 
 
-## OpenCV what?
+### OpenCV what?
 
 Open Source Computer Vision Library. Useful. Very helpful. Can use it to do operations on pixels!
 That is important for the Sobel Filter.
 
-## What is A Sobel Filter?
+### What is A Sobel Filter?
 
 A Sobel Filter makes the edges/features of an image white, and everything else black (ideally).
 Used for edge detection. The Sobel filter convolves an image's pixels with 2 (one horizontal and one vertical)
 kernels that create the approximate horizontal and vertical intensitiy deriviatve components of an image.
 
+
+### A Grayscale?
+
+
+
 ## How does that Look in Code?
 
+###The following are code snippets of things that are non-trivial! Just explaining the code that makes the magic happen.
+
+
+```c
+
+
+
+```
+
+
+
+## Images!
+
+![image](https://github.com/user-attachments/assets/0a39da2b-4cf6-4101-b584-45b242f54732)
+
+![image](https://github.com/user-attachments/assets/e1c24e35-d06c-442e-8439-c37eaded7169)
 
 
 
