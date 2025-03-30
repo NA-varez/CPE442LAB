@@ -2,10 +2,8 @@
 Check out the dropdowns for each lab!
 Explains some neat things.
 
-
-<h2>PART 1 - Makefile and Compiling with GCC</h2>
-
-(Lab 2 folder)
+<details open>
+<summary><h2>PART 1 - Makefile and Compiling with GCC</h2></summary>
 
 ### What is the point of a Makefile?
 A Makefile is a way of ***automating*** the process of compiling code. There are 3 advantages to a Makefile that are at the core of its use:
@@ -96,12 +94,11 @@ This'll just pop up a window displaying the image you specified as long as that 
 
 
 ![part1](https://github.com/user-attachments/assets/87c57d82-d03d-41c3-b87e-f381add23e67)
+</details>
 
 
-
-
-<h2>PART 2 - Sobel Filtered Video</h2>
-
+<details open>
+<summary><h2>PART 2 - Sobel Filtered Video</h2></summary>
 
 ### OpenCV what?
 
@@ -121,7 +118,7 @@ kernels that create the approximate horizontal and vertical intensitiy deriviatv
 
 ## How does that Look in Code?
 
-###The following are code snippets of things that are non-trivial! Just explaining the code that makes the magic happen.
+### The following are code snippets of things that are non-trivial! Just explaining the code that makes the magic happen.
 
 
 ```c
@@ -148,8 +145,4 @@ https://github.com/user-attachments/assets/3dc04aa4-f92e-4427-afe0-3cbc9722236d
 ```c
 
 ```
-
-
-
-
-
+</details>
