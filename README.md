@@ -138,6 +138,11 @@ kernels that create the approximate horizontal and vertical intensitiy deriviatv
 
 ![image](https://github.com/user-attachments/assets/e1c24e35-d06c-442e-8439-c37eaded7169)
 
+## Video!
+
+https://github.com/user-attachments/assets/3dc04aa4-f92e-4427-afe0-3cbc9722236d
+
+
 
 
 ```c
