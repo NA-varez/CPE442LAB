@@ -32,7 +32,7 @@ void* thread2Status = NULL;
 void* thread3Status = NULL;
 void* thread4Status = NULL;
 
-pthread_t sobelThread[4];
+pthread_t sobelThread[3];
 
 
 struct threadArgs {

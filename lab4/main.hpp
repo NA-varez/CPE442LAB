@@ -12,11 +12,9 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
-//Nothing here yet
-// //void* fnForThread1();
-// void* fnForThread2(void* threadArgs);
-// void* thread1Status;
-// void* thread2Status;
+// Function Definitions
+void* threadFrameSplit(void* threadSplitArgs);
+void* threadSobel(void* inputThreadArgs);// //void* fnForThread1();
 
 
 #endif //- _MAIN_H

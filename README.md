@@ -19,7 +19,7 @@ An object file is an intermediate compilation product that is not yet linked int
 ### What is in the executable that is created?
 This has all of the machine code from all object files, linked together. At this point, all of the functions have their real addresses, program entry point, and any static data is defined and ready to go.
 
-## O.K. Here is the Code
+### O.K. Here is the Code
 ```make
 CC = g++  # GCC Compiler
 
@@ -81,7 +81,7 @@ Target (the file you want to create): Prerequisites (files needed to create targ
 	Commands (actions to execute to create target)
 
 
-## The CODE code
+### The CODE Code
 
 The actual CODE code of this first part is pretty self explanatory. Explanation not really needed.
 
@@ -98,7 +98,7 @@ This'll just pop up a window displaying the image you specified as long as that 
 
 
 <details open>
-<summary><h2>PART 2 - Sobel Filtered Video</h2></summary>
+<summary><h2>PART 2 - Sobel Filtered Image and Video</h2></summary>
 
 ### OpenCV what?
 
@@ -108,41 +108,103 @@ That is important for the Sobel Filter.
 ### What is A Sobel Filter?
 
 A Sobel Filter makes the edges/features of an image white, and everything else black (ideally).
-Used for edge detection. The Sobel filter convolves an image's pixels with 2 (one horizontal and one vertical)
+Used for edge detection. The Sobel filter convolves an image's pixel data with 2 (one horizontal and one vertical)
 kernels that create the approximate horizontal and vertical intensitiy deriviatve components of an image.
+
+The horizontal derivative is the X component of the Z intensity gradient, G_X: dZ/dX.
+Vertical derivative is the Y component of the Z intensity gradient, G_Y: dZ/dY.
+
+#### Refresher on Gradients! (Hint: It's a 3-Dimensional derivative)
+
+Gradients come alive in mathematics when we start considering a 3rd dimension for derivatives. A gradient has a magnitude and a direction. The magnitude tells you how steep the slope is at that point in 3D space. The direction tells you the direction of the steepest ascent. In this case we are only interested in the magnitude (how steep the change in intensity is) at an X, Y position of each pixel. X and Y provide information for what pixel we are interested in. The Z is the intensity axis.
+
+The two 3x3 kernels are applied at each pixel position. As the program is iterating through every pixel, you can think of the kernels as sliding over to the next pixel position in the row (by incrementing the column variable). 
 
 
 ### A Grayscale?
 
+A Sobel Fiter can be made on a full color RGB image. But this is uneccessary.
+From what I can tell, the Sobel Filter really just needs to operate on the *intensity* of each pixel. So before filtering, each frame's pixel data is reduced to 1 intensity value.
 
+### How does that Look in Code?
 
-## How does that Look in Code?
+*The following are code snippets of things that are non-trivial! Just explaining the code that makes the magic happen.*
 
-### The following are code snippets of things that are non-trivial! Just explaining the code that makes the magic happen.
+### The Grayscale Operation 
+
+```c
+	Vec3b pixel = input.at<Vec3b>(i, j);
+
+	//Red = pixel[2];
+	//Green = pixel[1];
+	//Blue = pixel[0];
+
+	//ITU-R (BT.709) recommended algorithm for grayscale
+	uchar grayPixel = (0.2126 * pixel[2] + 0.7152 * pixel[1] + 0.0722 * pixel[0]);
+	//All pixels now represent 1 'intensity' value that will be used in the sobel
+	output.at<uchar>(i, j) = grayPixel;
+```
+
+Iteration over every pixel's RGB values to create the grayscale frame.
+Uses some algo for grayscaling from RGB values. You can read about it if you want.
+
+### The Sobel Operation
 
 
 ```c
+	int g_x = (-1*input.at<uchar>(i-1,j-1)) + input.at<uchar>(i-1,j+1) +
+			(-2*input.at<uchar>(i,j-1)) + 2*input.at<uchar>(i,j+1) +
+			(-1*input.at<uchar>(i+1,j-1)) + input.at<uchar>(i+1,j+1);
+	int g_y = (-1*input.at<uchar>(i-1,j-1)) + -1*input.at<uchar>(i-1,j+1) +
+			(-2*input.at<uchar>(i-1,j)) + 2*input.at<uchar>(i+1,j) +
+			(1*input.at<uchar>(i+1,j-1)) + 1*input.at<uchar>(i+1,j+1);
 
-
-
+	output.at<uchar>(i, j) = saturate_cast<uchar>(std::abs(g_x) + std::abs(g_y));
 ```
 
+The above code is within a typical double for-loop for iterating over a matrix.
+The loop does not iterate over the bordering pixels since the 3x3 kernel requires an area of 3x3 pixels to do an operation. Each multiplication is done on a pixel that is offset from the position (i, j) in a 3x3 area. For example (i-1, j-1) is the top left corner pixel that is diagonal to pixel (i, j).
+
+If this were not an approximation the last line there for the output pixel would be sqrt(G_X^2 + G_Y^2), the 'Euclidean Norm' Pythagorean Theorem, Straight-line distance, *Style* magnitude. Instead the Manhatten Disatnce, G_X + G_Y is used.
+
+After ALL THAT, to keep the same size as the input frame, a border of black pixels is added.
 
 
-## Images!
+
+### Images!
 
 ![image](https://github.com/user-attachments/assets/0a39da2b-4cf6-4101-b584-45b242f54732)
 
 ![image](https://github.com/user-attachments/assets/e1c24e35-d06c-442e-8439-c37eaded7169)
 
-## Video!
+### Video!
 
 https://github.com/user-attachments/assets/3dc04aa4-f92e-4427-afe0-3cbc9722236d
 
 
 
+</details>
 
-```c
 
-```
+<details open>
+<summary><h2>PART 3 - Threading with pThreads and Barriers</h2></summary>
+
+Going to be honest, this is where things begin to get messy.
+
+
+### Threading and Barriers
+
+Threading is one of the first things you begin to consider to increase speed of processing. Threading allows you to parallelize your program. The number of threads you are capable of running at one time, depends on the number of CPU cores you have on your hardware. For the Raspberry Pi 3, I've got 4 to work with.
+
+### Threading Initialization
+
+
+
+To outfit your program with threads you will inevitably need barriers to prevent your threads from proceeding before some process is done. In our case we would like all threads to stop before proceeding to the Sobel until all threads have completed their Grayscale on their portion of the frame.
+
+
+
+
+
+
 </details>

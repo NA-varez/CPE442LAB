@@ -25,9 +25,7 @@ using namespace cv;
 using namespace std;
 
 /***********************************************/
-// Function Definitions
-void* threadFrameSplit(void* threadSplitArgs);
-void* threadSobel(void* inputThreadArgs);
+
 
 pthread_t splitThread;
 pthread_t sobelThread[3];
