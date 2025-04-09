@@ -1,6 +1,6 @@
 # README!!!
 Check out the dropdowns for each lab!
-Explains some neat things.
+Explains some neat things for each folder of code.
 
 <details open>
 <summary><h2>PART 1 - Makefile and Compiling with GCC</h2></summary>
