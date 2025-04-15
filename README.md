@@ -189,18 +189,129 @@ https://github.com/user-attachments/assets/3dc04aa4-f92e-4427-afe0-3cbc9722236d
 <details open>
 <summary><h2>PART 3 - Threading with pThreads and Barriers</h2></summary>
 
-Going to be honest, this is where things begin to get messy.
+Going to be honest, this is where things start to get busy.
 
 
 ### Threading and Barriers
 
 Threading is one of the first things you begin to consider to increase speed of processing. Threading allows you to parallelize your program. The number of threads you are capable of running at one time, depends on the number of CPU cores you have on your hardware. For the Raspberry Pi 3, I've got 4 to work with.
 
-### Threading Initialization
+### Threading Initialization and Void Star
+In order for each thread to be successful, they first need to know what they are going to work on. To get them started we do this:
+
+```c
+void* threadSobel(void* inputThreadArgs);
+void* thread1Status = NULL;
+void* thread2Status = NULL;
+void* thread3Status = NULL;
+void* thread4Status = NULL;
+
+pthread_t sobelThread[3];
+
+struct threadArgs {
+	Mat* input;
+	Mat* grayScale;
+	Mat* output;
+	int start;
+	int end;
+	bool stop = 0;
+};
+```
+First the 'thread function' prototype and each variable to hold thread statuses.
+
+A struct will package up all the information each thread needs to complete their process: Adresses of Mat frames, starting and ending row, and bool for the ability to stop processing before completion of all frames.
+
+Inside the 'threadSobel' function (the function that each thread will run),
+we have void* unpacking, grayscaling, sobelling, outputting.
+
+Unpacking was weird when I first learned this C++ phenomenon, but makes sense 
+the more I look understand whats happening.
+
+```c
+void* threadSobel(void* inputThreadArgs) {
+	while(true)
+	{
+		// Wait for next frame to be read by main
+		pthread_barrier_wait(&barrierFrameRead);
+		
+		struct threadArgs* sobelStruct = (struct threadArgs*)inputThreadArgs;
+		bool stop = (sobelStruct->stop);
+		
+		// If an end flag is recieved (no more frames) from main 
+		// then break out of while loop
+		if(stop) {
+			break;
+		}
+		
+		// Unpacking inputThreadArgs back to their respective var types
+		Mat* inputFrame = (sobelStruct->input);
+		Mat* grayScaleFrame = (sobelStruct->grayScale);
+		Mat* outputFrame = (sobelStruct->output);
+		int start = (sobelStruct->start);
+		int end = (sobelStruct->end);
+		int frame_columns = inputFrame->cols;
+```
+
+Without looking it up myself, but trying to remember instead, a void* is an address to
+no particular type. A different way.. a void* is a pointer that does not return its type. That allows you to do some neat stuff. Let's look at this line:
+
+```c
+	struct threadArgs* sobelStruct = (struct threadArgs*)inputThreadArgs;
+```
+
+WOW. A mouthful.
+
+So, this function takes in a void* type variable. Much like how you can dereference a pointer to get the value, you can dereference the void*. BUT.. you have to cast that derefernce back into its type so you can make use of it. Otherwise its some weird void* type thing.
+
+Here is that line of code in words:
+Create a struct threadArgs pointer (this was defined earlier) named 'sobelStruct'
+Assign the sobelStruct pointer to the struct-threadArgs-pointer-re-casted inputThreadArgs void*.
+
+After that, the variables are then unpacked from the sobelStruct pointer.
+
+
+### Barriers
+
+To outfit your program with threads you will inevitably need barriers to prevent your threads from proceeding before some process is done. In our case, the frame is split horizontally into 4 parts for each thread. This is the jist of how the threadSobel function is organized with barriers.
+
+
+```c
+	// Wait for next frame to be read by main
+	pthread_barrier_wait(&barrierFrameRead);
+
+	... threadArgs unpacking and grayscale ...
+
+	// All pixels now represent 1 'intensity' value that will be used in the sobel
+	// Wait for all threads to complete the grayScaleFrame
+	pthread_barrier_wait(&barrierGrayScale);
+
+	... sobel processing ...
+
+	// Wait for threads to finish Sobel frame before outputting the frame and beginning the next frame
+	pthread_barrier_wait(&barrierSobel);
+```
+
+### Main
+
+In the main function its a bit self-explanatory whats happening.
+I just need to initialize each thread and fill up each of their respective threadArgs structs with the appropriate values, dynamically (without knowing the resolution (size of each frame) of the video).
+
+</details>
+
+
+<details open>
+<summary><h2>PART 3B - Vector Operations for Optimization</h2></summary>
 
 
 
-To outfit your program with threads you will inevitably need barriers to prevent your threads from proceeding before some process is done. In our case we would like all threads to stop before proceeding to the Sobel until all threads have completed their Grayscale on their portion of the frame.
+
+
+</details>
+
+
+<details open>
+<summary><h2>PART 3C - Compiler Optimizations for Optimization</h2></summary>
+
 
 
 
@@ -208,3 +319,42 @@ To outfit your program with threads you will inevitably need barriers to prevent
 
 
 </details>
+
+
+<details open>
+<summary><h2>PART 4 - Optimizing Optimization!</h2></summary>
+
+
+
+
+
+
+</details>
+
+
+
+
+
+<details open>
+<summary><h2>Part 5 - The Speedup Results</h2></summary>
+
+
+
+
+
+
+
+</details>
+
+
+
+
+<details open>
+<summary><h2>PART ? - Questions and Where it can be Improved</h2></summary>
+
+
+
+
+
+</details>
+
