@@ -302,6 +302,45 @@ I just need to initialize each thread and fill up each of their respective threa
 <details open>
 <summary><h2>PART 3B - Vector Operations for Optimization</h2></summary>
 
+Whats the vector operations for?
+
+It's always best to reduce the number of loops your program does. The operations in the loop inevitably fetch memory over and over again. Every memory fetch and counter increment you do for each loop is time consuming. So what if you could do multiple math operations at once?
+
+This is where vector operations come in. SIMD, ISA, ARM Architecture, SIMD, NEON, ISA... What??
+
+Abbreviations are a curse for learning! Okay, so SIMD stands for (Single Instruction Multiple Data). SIMD is the name for a particular way of doing parallelization the same way we might say TSA to desribe that line you have to stand in before you get into the airport terminal.
+
+Every processor can support a particular ISA (Instruction Set Architecture). But not all implement SIMD technology. In this case, for the Raspberry Pi 3, it uses a Broadcom BCM2837 SoC which includes an ARM Cortex-A53 quad-core processor. That processor implements the ARMv8-A architecture which includes NEON SIMD. There we go, we've it down to the silicon.
+
+How?
+
+Using ARM NEON Intrinsics of course! These are available because the Raspberry Pi 3 has a 
+
+NEON registers made available by the ARM-Cortex-A53 on the Raspberry pi 3 are 128 bits wide.
+
+So the most we could parallelize with a single NEON register is 8 16-bit elements OR any other combination offered by [NEON](https://developer.arm.com/architectures/instruction-sets/intrinsics/#f:@navigationhierarchiessimdisa=[Neon]) that multiplies to 128 bits.
+
+We start by using 3 int16x8_t to load the 8 top, middle, and bottom pixel portions required for 6 full sobel pixel calculations. Lets break this down. Here our kernels again for the X and Y gradients:
+
+|-1|0|+1|
+|-2|0|+2|
+|-1|0|+1|
+
+
+|+1|+2|+1|
+|0|0|0|
+|-1|-2|-1|
+
+
+
+
+```c
+
+
+
+```
+
+
 
 
 

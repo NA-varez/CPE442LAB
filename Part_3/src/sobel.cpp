@@ -67,7 +67,7 @@ void* threadSobel(void* inputThreadArgs) {
 		struct threadArgs *sobelStruct = (struct threadArgs*)inputThreadArgs;
 		bool stop = (sobelStruct->stop);
 		
-		// If an end flag is recieved (no more frames) from main 
+		// If an end flag is received (no more frames) from main 
 		// then break out of while loop
 		if(stop) {
 			break;
@@ -113,14 +113,17 @@ void* threadSobel(void* inputThreadArgs) {
 		// Next is to pass the grayscale through the sobel filter
 		for (int i = start; i < end; ++i) {
 
+			// ptr() returns a uchar* for the specified row index
 			first_row = grayScaleFrame->ptr(i - 1);
 			second_row = grayScaleFrame->ptr(i);
 			third_row = grayScaleFrame->ptr(i + 1);
 			
 			sobel_frame_ptr = outputFrame->ptr(i);
 
+			// Loops over a divisible by 8 number of times
 				for (int col = 0; col < (frame_columns - (frame_columns % 8)); col+=6) {
 					
+					//int16x8_t: 16 is the bit-size of each element and 8 is the number of elements
 					// Load grayscale values and reinterpret them as signed integers before operations
 					int16x8_t top = vreinterpretq_s16_u16(vld1q_u16((const uint16_t*)first_row));
 					int16x8_t mid = vreinterpretq_s16_u16(vld1q_u16((const uint16_t*)second_row));
